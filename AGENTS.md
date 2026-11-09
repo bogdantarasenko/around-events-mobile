@@ -47,6 +47,24 @@ library is pinned to lifecycle 2.10.0).
 - Business logic in `shared` gets unit tests in `commonTest` (Turbine for flows, fakes over mocks,
   `MapSettings` for preferences, Ktor `MockEngine` for HTTP).
 
+## Kotlin names in Swift
+
+- A Kotlin enum entry `New` reaches Swift as `.theNew` (`new` is reserved in Objective-C).
+- Anything named `description` collides with `NSObject.description` and comes out as `description_`
+  (`MyEvent.description_`). Don't name new enum entries `Description`; `FormField.DescriptionText` exists
+  for this reason.
+- A `List<Pair<String, String>>` constant such as `EVENT_LANGUAGES` is `VocabularyKt.EVENT_LANGUAGES`, an array
+  of `KotlinPair` whose `first`/`second` need `as String?`.
+
+## Checking the cabinet without a Telegram account
+
+Signing in needs a real Telegram account. To look at the signed-in screens in the simulator, build against an
+unreachable server (`xcodebuild … 'AROUND_BASE_URL=http://127.0.0.1:9' build`) and seed `UserDefaults` with
+`xcrun simctl spawn <udid> defaults write events.around.app.debug <key> -string '<json>'` for the keys
+`telegram_login` (a `TelegramLogin` with a fresh `authDate`), `my_events` (a JSON list in the
+`MyEventResource` shape) and `site_props`. Requests then fail as offline instead of 401, and the app shows the
+cache.
+
 ## Rules
 
 - Comments only where the code isn't self-explanatory.

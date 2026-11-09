@@ -70,7 +70,8 @@ enum class FormField {
     EndDate,
     RepeatUntil,
     Venue,
-    Description,
+    // Not `Description`: that collides with `NSObject.description` in Swift.
+    DescriptionText,
     Pricing,
     PriceFrom,
     AcceptedRules,
@@ -97,7 +98,7 @@ private fun EventForm.eventProblem(posterBytes: Long?): FormField? = when {
 
 private fun EventForm.entryProblem(): FormField? = when {
     venue.trim().length < MIN_VENUE -> FormField.Venue
-    description.trim().length < MIN_DESCRIPTION -> FormField.Description
+    description.trim().length < MIN_DESCRIPTION -> FormField.DescriptionText
     pricing == null -> FormField.Pricing
     pricing == Pricing.Paid && priceFrom.isBlank() && priceNote.isBlank() -> FormField.PriceFrom
     !acceptedRules -> FormField.AcceptedRules
@@ -197,7 +198,7 @@ fun serverField(name: String?): FormField? = when (name) {
     "repeat", "repeat_until" -> FormField.RepeatUntil
     "venue", "address" -> FormField.Venue
     "price_from", "event_url", "tickets_url" -> FormField.PriceFrom
-    "description" -> FormField.Description
+    "description" -> FormField.DescriptionText
     "poster" -> FormField.Poster
     "accepted_rules" -> FormField.AcceptedRules
     else -> null

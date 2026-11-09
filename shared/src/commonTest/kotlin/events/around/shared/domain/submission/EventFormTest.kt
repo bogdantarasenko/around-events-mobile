@@ -95,7 +95,7 @@ class EventFormTest {
             FormField.EndDate,
             complete.copy(dayMode = DayMode.MultiDay, endDate = "2026-11-30").firstProblem(null),
         )
-        assertEquals(FormField.Description, complete.copy(description = "short").firstProblem(null))
+        assertEquals(FormField.DescriptionText, complete.copy(description = "short").firstProblem(null))
         assertEquals(FormField.Pricing, complete.copy(pricing = null).firstProblem(null))
         assertEquals(FormField.AcceptedRules, complete.copy(acceptedRules = false).firstProblem(null))
         assertNull(complete.firstProblem(null))

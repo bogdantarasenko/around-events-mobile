@@ -235,10 +235,10 @@ fun DescriptionSection(
             onValueChange = actions::setDescription,
             label = strings.formDescription,
             placeholder = strings.formDescriptionPlaceholder,
-            error = scope.problem(FormField.Description),
+            error = scope.problem(FormField.DescriptionText),
             singleLine = false,
             minLines = 4,
-            modifier = Modifier.bringIntoViewRequester(scope.requester(FormField.Description)),
+            modifier = Modifier.bringIntoViewRequester(scope.requester(FormField.DescriptionText)),
         )
         Text(strings.formPricing, style = MaterialTheme.typography.labelLarge)
         Segmented(

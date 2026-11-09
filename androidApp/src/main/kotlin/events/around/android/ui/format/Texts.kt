@@ -63,7 +63,7 @@ fun FormField.problem(strings: AroundStrings): String = when (this) {
     FormField.EndDate -> strings.problemEndDate
     FormField.RepeatUntil -> strings.problemRepeatUntil
     FormField.Venue -> strings.problemVenue
-    FormField.Description -> strings.problemDescription
+    FormField.DescriptionText -> strings.problemDescription
     FormField.Pricing -> strings.problemPricing
     FormField.PriceFrom -> strings.problemPriceFrom
     FormField.AcceptedRules -> strings.problemAcceptedRules
