@@ -27,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -35,14 +36,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import events.around.android.ui.components.openUrl
 import events.around.android.ui.strings.LocalAroundStrings
+import events.around.android.ui.theme.LocalDarkTheme
 import events.around.shared.domain.miniapp.MiniAppLinks
 import events.around.shared.domain.miniapp.MiniAppScreen
 import org.koin.compose.koinInject
+
+private val MiniAppLight = Color(0xFFF4F5F7)
+private val MiniAppDark = Color(0xFF000000)
 
 /**
  * The around.events mini-app inside the app: submitting an event, or the organizer's own events. It is the same
@@ -61,11 +68,15 @@ fun MiniAppScreen(
     var webView by remember { mutableStateOf<WebView?>(null) }
     BackHandler(enabled = webView?.canGoBack() == true) { webView?.goBack() }
 
+    // The mini-app's own page background (BACKGROUND in its scheme.ts): no white flash while it loads.
+    val background = if (LocalDarkTheme.current) MiniAppDark else MiniAppLight
     Scaffold(
         modifier = modifier,
+        containerColor = background,
         topBar = {
             TopAppBar(
                 title = { Text(if (screen == MiniAppScreen.Submit) strings.feedSubmit else strings.myEvents) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = background),
                 actions = {
                     IconButton(onClick = navigateBack) { Icon(Icons.Filled.Close, contentDescription = strings.close) }
                 },
@@ -88,6 +99,7 @@ fun MiniAppScreen(
             MiniAppWebView(
                 url = links.url(screen),
                 siteHost = links.host,
+                background = background,
                 onFailure = { failed = true },
                 onCreated = { webView = it },
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -101,6 +113,7 @@ fun MiniAppScreen(
 private fun MiniAppWebView(
     url: String,
     siteHost: String,
+    background: Color,
     onFailure: () -> Unit,
     onCreated: (WebView) -> Unit,
     modifier: Modifier = Modifier,
@@ -114,6 +127,7 @@ private fun MiniAppWebView(
     }
     val view = remember {
         WebView(context).apply {
+            setBackgroundColor(background.toArgb())
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.setSupportMultipleWindows(true)

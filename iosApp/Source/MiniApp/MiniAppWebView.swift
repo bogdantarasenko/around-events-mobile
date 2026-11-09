@@ -9,6 +9,12 @@ struct MiniAppWebView: UIViewRepresentable {
     /// Changing it reloads the page after a failure.
     var attempt = 0
     let onFailure: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// The mini-app's own page background (`BACKGROUND` in its scheme.ts), shown before the page draws.
+    static func background(dark: Bool) -> UIColor {
+        dark ? .black : UIColor(red: 0xF4 / 255, green: 0xF5 / 255, blue: 0xF7 / 255, alpha: 1)
+    }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -21,6 +27,11 @@ struct MiniAppWebView: UIViewRepresentable {
         webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
         webView.scrollView.contentInsetAdjustmentBehavior = .never
+        // No white flash while the page loads: the view is the mini-app's colour from the first frame.
+        webView.isOpaque = false
+        webView.backgroundColor = Self.background(dark: colorScheme == .dark)
+        webView.scrollView.backgroundColor = webView.backgroundColor
+        webView.overrideUserInterfaceStyle = colorScheme == .dark ? .dark : .light
         if let url = URL(string: url) { webView.load(URLRequest(url: url)) }
         context.coordinator.attempt = attempt
         return webView
@@ -28,6 +39,9 @@ struct MiniAppWebView: UIViewRepresentable {
 
     func updateUIView(_ webView: WKWebView, context: Context) {
         context.coordinator.parent = self
+        webView.backgroundColor = Self.background(dark: colorScheme == .dark)
+        webView.scrollView.backgroundColor = webView.backgroundColor
+        webView.overrideUserInterfaceStyle = colorScheme == .dark ? .dark : .light
         if attempt != context.coordinator.attempt {
             context.coordinator.attempt = attempt
             if let url = URL(string: url) { webView.load(URLRequest(url: url)) }

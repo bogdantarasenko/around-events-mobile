@@ -7,6 +7,7 @@ struct MiniAppSheet: View {
     let screen: MiniAppScreen
     @Environment(\.strings) private var strings
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @State private var failed = false
     @State private var attempt = 0
 
@@ -31,6 +32,7 @@ struct MiniAppSheet: View {
                         .ignoresSafeArea(edges: .bottom)
                 }
             }
+            .background(Color(MiniAppWebView.background(dark: colorScheme == .dark)).ignoresSafeArea())
             .navigationTitle(screen == .submit ? strings.feedSubmit : strings.myEvents)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
