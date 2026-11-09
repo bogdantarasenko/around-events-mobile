@@ -36,7 +36,7 @@ struct EventsScreen: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Rectangle().fill(Palette.chipBorder).frame(height: 0.5).padding(.horizontal, -20)
                     Text(strings.discoverUpcoming)
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.title3.weight(.semibold))
                         .foregroundStyle(Palette.ink)
                         .padding(.top, 18)
                 }
@@ -53,8 +53,13 @@ struct EventsScreen: View {
         }
         .listStyle(.plain)
         .scrollIndicators(.hidden)
-        .safeAreaInset(edge: .top) { TopBar(path: $path) { path.append(.search) }.padding(.bottom, 4) }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { path.append(.search) } label: { Image(systemName: "magnifyingglass") }
+                    .accessibilityLabel(strings.searchPlaceholder)
+            }
+        }
         .refreshable { store.instance.refresh() }
         .task {
             for await value in store.instance.state {
@@ -73,8 +78,7 @@ struct EventsScreen: View {
                     .background(CategoryStyle.tint(category).opacity(0.16), in: Circle())
             }
             Text(state.category.map { Labels.category($0, strings) } ?? state.city?.name ?? strings.allEvents)
-                .font(.system(size: 28, weight: .bold))
-                .tracking(0.36)
+                .font(.largeTitle.weight(.bold))
                 .foregroundStyle(Palette.ink)
                 .padding(.top, 2)
             countLine(state)
@@ -89,7 +93,7 @@ struct EventsScreen: View {
         let number = "\(state.count)"
         let word = label.replacingOccurrences(of: number, with: "").trimmingCharacters(in: CharacterSet(charactersIn: ": ")).lowercased()
         return (Text(number).foregroundStyle(Palette.ink).fontWeight(.medium) + Text(" " + word).foregroundStyle(Palette.secondary))
-            .font(.system(size: 15))
+            .font(.subheadline)
     }
 
     @ViewBuilder
@@ -98,7 +102,7 @@ struct EventsScreen: View {
             .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 0))
             .listRowSeparator(.hidden)
         Text(strings.discoverOrganizers)
-            .font(.system(size: 20, weight: .semibold))
+            .font(.title3.weight(.semibold))
             .foregroundStyle(Palette.ink)
             .padding(.top, 12)
             .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
@@ -107,11 +111,11 @@ struct EventsScreen: View {
             Button { path.append(.organizer(slug: organizer.slug)) } label: {
                 HStack(spacing: 13) {
                     Avatar(url: organizer.avatarUrl, name: organizer.name, size: 60, cornerRadius: 10)
-                    Text(organizer.name).font(.system(size: 17, weight: .medium)).foregroundStyle(Palette.ink)
+                    Text(organizer.name).font(.body.weight(.medium)).foregroundStyle(Palette.ink)
                     Spacer()
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressable)
             .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
             .listRowSeparator(.hidden)
         }

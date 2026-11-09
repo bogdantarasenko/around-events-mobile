@@ -23,7 +23,7 @@ struct EventFacts: View {
                             Image(systemName: "chevron.right").foregroundStyle(.white.opacity(0.5))
                         }
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                 }
             }
             if let price = Dates.price(event, strings: strings) {
@@ -52,9 +52,9 @@ struct EventFacts: View {
             section(strings.detailLocation) {
                 VStack(alignment: .leading, spacing: 10) {
                     VStack(alignment: .leading, spacing: 4) {
-                        if let venue = event.venue { Text(venue).font(.system(size: 17, weight: .medium)) }
+                        if let venue = event.venue { Text(venue).font(.body.weight(.medium)) }
                         if let address = event.address {
-                            Text(address).font(.system(size: 16)).foregroundStyle(Color(white: 0.7))
+                            Text(address).font(.callout).foregroundStyle(Color(white: 0.7))
                         }
                     }
                     if let place = MapPlace.group([event]).first {
@@ -94,7 +94,7 @@ struct EventFacts: View {
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.system(size: 15)).foregroundStyle(Color(white: 0.69))
+            Text(title).font(.subheadline).foregroundStyle(Color(white: 0.69))
             Rectangle().fill(Color.white.opacity(0.2)).frame(height: 0.8)
             content()
         }

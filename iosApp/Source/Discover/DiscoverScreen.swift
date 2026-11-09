@@ -1,7 +1,8 @@
 import AroundKit
 import SwiftUI
 
-/// Discover as in the designs: the city's upcoming events, categories, cities and organizers.
+/// Discover as in the designs: the city's upcoming events, categories, cities and organizers, under a large title
+/// with the map and search in the toolbar.
 struct DiscoverScreen: View {
     let viewModel: DiscoverViewModel
     @Binding var path: [AppRoute]
@@ -13,41 +14,30 @@ struct DiscoverScreen: View {
         let state = state ?? viewModel.state.value
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                header.padding(.bottom, 12)
                 content(state)
             }
-            .padding(.bottom, 100)
+            .padding(.bottom, 24)
         }
         .scrollIndicators(.hidden)
         .refreshable { viewModel.refresh() }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(strings.tabDiscover)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button { path.append(.settings) } label: { Image(systemName: "person.crop.circle") }
+                    .accessibilityLabel(strings.settingsTitle)
+            }
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button(action: onOpenMap) { Image(systemName: "map") }
+                    .accessibilityLabel(strings.mapTitle)
+                Button { path.append(.search) } label: { Image(systemName: "magnifyingglass") }
+                    .accessibilityLabel(strings.searchPlaceholder)
+            }
+        }
         .task {
             for await value in viewModel.state {
                 self.state = value
             }
         }
-    }
-
-    private var header: some View {
-        HStack(spacing: 9) {
-            Button { path.append(.settings) } label: {
-                Image(systemName: "person.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(Palette.secondary)
-                    .frame(width: 44, height: 44)
-                    .background(Palette.tabSelected, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(strings.settingsTitle)
-            Text(strings.tabDiscover).font(.system(size: 22, weight: .bold)).tracking(-0.26).foregroundStyle(Palette.ink)
-            Spacer()
-            HeaderActions(
-                first: ("map", strings.mapTitle, onOpenMap),
-                second: ("magnifyingglass", strings.searchPlaceholder, { path.append(.search) })
-            )
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
     }
 
     @ViewBuilder
@@ -77,7 +67,7 @@ struct DiscoverScreen: View {
                 CityCarousel(cities: state.cities, current: state.city?.slug, onOpenAll: { path.append(.cities) }) {
                     path.append(.city(slug: $0))
                 }
-                    .padding(.top, 33)
+                .padding(.top, 33)
             }
             if !state.organizers.isEmpty {
                 OrganizerList(organizers: state.organizers) { path.append(.organizer(slug: $0)) }

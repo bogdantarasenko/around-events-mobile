@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -23,14 +23,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,8 +60,6 @@ import events.around.android.OrganizerPage
 import events.around.android.Search
 import events.around.android.Settings
 import events.around.android.city.cityGradient
-import events.around.android.home.HeaderAction
-import events.around.android.home.HeaderActions
 import events.around.android.ui.components.Avatar
 import events.around.android.ui.components.ErrorBanner
 import events.around.android.ui.components.EventRow
@@ -79,7 +82,6 @@ private const val SHADE_START = 0.5f
 // The design's 333dp column on a 393dp screen: 20 margin, 20 gap, 20 of the next column.
 private const val SHELF_PEEK_DP = 60
 
-private val TAB_BAR_SPACE = 100.dp
 private val ShadeEnd = Color.Black.copy(alpha = 0.45f)
 
 /** Discover as in the designs: the city's upcoming events, categories, cities and organizers. */
@@ -92,106 +94,97 @@ fun DiscoverScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val strings = LocalAroundStrings.current
-    PullToRefreshBox(
-        isRefreshing = state.isRefreshing && !state.isLoading,
-        onRefresh = viewModel::refresh,
-        modifier = modifier.fillMaxSize().statusBarsPadding(),
-    ) {
-        LazyColumn(contentPadding = PaddingValues(bottom = TAB_BAR_SPACE), modifier = Modifier.fillMaxSize()) {
-            item { Header(navigate, onOpenMap) }
-            when {
-                state.isLoading -> item {
-                    Box(
-                        Modifier.fillMaxWidth().padding(64.dp),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
-                }
-                state.upcoming.isEmpty() && (state.isEmpty || state.error != null) -> item {
-                    Empty(state.error?.text(strings) ?: strings.feedEmptyText, viewModel::refresh)
-                }
-                else -> {
-                    state.error?.let { error ->
-                        item {
-                            ErrorBanner(
-                                error.text(strings),
-                                actionLabel = strings.retry,
-                                onAction = viewModel::refresh,
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                            )
-                        }
+    val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    Scaffold(
+        modifier = modifier.nestedScroll(scroll.nestedScrollConnection),
+        topBar = {
+            LargeTopAppBar(
+                title = { Text(strings.tabDiscover) },
+                navigationIcon = {
+                    IconButton(onClick = { navigate(Settings) }) {
+                        Icon(Icons.Outlined.AccountCircle, contentDescription = strings.settingsTitle)
                     }
-                    item {
-                        UpcomingShelf(
-                            state,
-                            onOpenAll = { navigate(Events()) },
-                            onOpen = { navigate(EventDetail(it)) },
-                        )
+                },
+                actions = {
+                    IconButton(onClick = onOpenMap) { Icon(Icons.Outlined.Map, contentDescription = strings.mapTitle) }
+                    IconButton(onClick = { navigate(Search) }) {
+                        Icon(Icons.Outlined.Search, contentDescription = strings.searchPlaceholder)
                     }
-                    if (state.categories.isNotEmpty()) {
-                        item {
-                            CategoryGrid(
-                                state.categories,
-                                onOpen = { navigate(Events(it)) },
-                                modifier = Modifier.padding(top = 21.dp),
-                            )
-                        }
-                    }
-                    if (state.cities.size > 1) {
-                        item {
-                            CityCarousel(
-                                state.cities,
-                                state.city?.slug,
-                                onOpenAll = { navigate(Cities) },
-                                onSelect = { navigate(CityPage(it)) },
-                                modifier = Modifier.padding(top = 33.dp),
-                            )
-                        }
-                    }
-                    if (state.organizers.isNotEmpty()) {
-                        item {
-                            OrganizerList(
-                                state.organizers,
-                                onOpen = { navigate(OrganizerPage(it)) },
-                                modifier = Modifier.padding(top = 32.dp),
-                            )
-                        }
-                    }
-                }
+                },
+                scrollBehavior = scroll,
+            )
+        },
+    ) { padding ->
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing && !state.isLoading,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize().padding(padding),
+        ) {
+            LazyColumn(contentPadding = PaddingValues(bottom = 24.dp), modifier = Modifier.fillMaxSize()) {
+                discoverContent(state, viewModel, navigate, strings.retry)
             }
         }
     }
 }
 
-@Composable
-private fun Header(
+private fun LazyListScope.discoverContent(
+    state: DiscoverUiState,
+    viewModel: DiscoverViewModel,
     navigate: (NavKey) -> Unit,
-    onOpenMap: () -> Unit,
+    retry: String,
 ) {
-    val strings = LocalAroundStrings.current
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(9.dp),
-        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 12.dp),
-    ) {
-        Box(
-            Modifier.size(
-                44.dp,
-            ).clip(CircleShape).background(AroundColors.tabSelected).clickable { navigate(Settings) },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Filled.Person, contentDescription = strings.settingsTitle, tint = AroundColors.secondary)
+    when {
+        state.isLoading -> item {
+            Box(
+                Modifier.fillMaxWidth().padding(64.dp),
+                contentAlignment = Alignment.Center,
+            ) { CircularProgressIndicator() }
         }
-        Text(
-            strings.tabDiscover,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = AroundColors.ink,
-            modifier = Modifier.weight(1f),
-        )
-        HeaderActions(
-            HeaderAction(Icons.Outlined.Map, strings.mapTitle, onOpenMap),
-            HeaderAction(Icons.Outlined.Search, strings.searchPlaceholder) { navigate(Search) },
-        )
+        state.upcoming.isEmpty() && (state.isEmpty || state.error != null) -> item {
+            Empty(state.error?.text(LocalAroundStrings.current), viewModel::refresh)
+        }
+        else -> {
+            state.error?.let { error ->
+                item {
+                    ErrorBanner(
+                        error.text(LocalAroundStrings.current),
+                        actionLabel = retry,
+                        onAction = viewModel::refresh,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
+                }
+            }
+            item { UpcomingShelf(state, onOpenAll = { navigate(Events()) }, onOpen = { navigate(EventDetail(it)) }) }
+            if (state.categories.isNotEmpty()) {
+                item {
+                    CategoryGrid(
+                        state.categories,
+                        onOpen = { navigate(Events(it)) },
+                        modifier = Modifier.padding(top = 21.dp),
+                    )
+                }
+            }
+            if (state.cities.size > 1) {
+                item {
+                    CityCarousel(
+                        state.cities,
+                        state.city?.slug,
+                        onOpenAll = { navigate(Cities) },
+                        onSelect = { navigate(CityPage(it)) },
+                        modifier = Modifier.padding(top = 33.dp),
+                    )
+                }
+            }
+            if (state.organizers.isNotEmpty()) {
+                item {
+                    OrganizerList(
+                        state.organizers,
+                        onOpen = { navigate(OrganizerPage(it)) },
+                        modifier = Modifier.padding(top = 32.dp),
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -397,10 +390,11 @@ private fun OrganizerList(
 
 @Composable
 private fun Empty(
-    message: String,
+    error: String?,
     onRetry: () -> Unit,
 ) {
     val strings = LocalAroundStrings.current
+    val message = error ?: strings.feedEmptyText
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),

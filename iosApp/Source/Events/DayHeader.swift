@@ -10,13 +10,13 @@ struct DayHeader: View {
     var body: some View {
         let (main, weekday) = Dates.headingParts(day, strings: strings, locale: locale)
         HStack(spacing: 6) {
-            Text(main).font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.ink)
+            Text(main).foregroundStyle(Palette.ink)
             if let weekday {
-                Text("/").font(.system(size: 17)).foregroundStyle(Palette.slash)
-                Text(weekday).font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.weekday)
+                Text("/").fontWeight(.regular).foregroundStyle(Palette.slash)
+                Text(weekday).foregroundStyle(Palette.weekday)
             }
         }
-        .tracking(-0.43)
+        .font(.headline)
         .textCase(nil)
     }
 }

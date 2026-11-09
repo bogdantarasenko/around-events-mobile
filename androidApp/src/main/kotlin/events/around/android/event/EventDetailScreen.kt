@@ -31,6 +31,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -119,18 +121,25 @@ fun EventDetailScreen(
                 Facts(event, state.nextDates, onOpenOrganizer)
             }
         }
-        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(12.dp)) {
-            GlassButton(Icons.AutoMirrored.Filled.ArrowBack, strings.back, navigateBack)
-            Box(Modifier.weight(1f))
-            val context = LocalContext.current
-            val shared = event?.let { linkOf(it.postUrl ?: it.eventUrl) }
-            if (event != null && shared != null) {
-                GlassButton(
-                    Icons.Outlined.Share,
-                    strings.share,
-                ) { context.shareText("${event.title}\n$shared", event.title) }
-            }
-        }
+        // A transparent system top bar over the dark page: the system back arrow, share on the right.
+        TopAppBar(
+            title = {},
+            navigationIcon = {
+                IconButton(onClick = navigateBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back, tint = Color.White)
+                }
+            },
+            actions = {
+                val context = LocalContext.current
+                val shared = event?.let { linkOf(it.postUrl ?: it.eventUrl) }
+                if (event != null && shared != null) {
+                    IconButton(onClick = { context.shareText("${event.title}\n$shared", event.title) }) {
+                        Icon(Icons.Outlined.Share, contentDescription = strings.share, tint = Color.White)
+                    }
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+        )
     }
 }
 
@@ -151,17 +160,6 @@ private fun EventBackdrop(event: Event) {
                 Brush.verticalGradient(listOf(categoryTint(event.category).copy(alpha = 0.45f), Color.Transparent)),
             ),
         )
-    }
-}
-
-@Composable
-private fun GlassButton(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-) {
-    IconButton(onClick = onClick, modifier = Modifier.size(40.dp).clip(CircleShape).background(Glass)) {
-        Icon(icon, contentDescription = label, tint = Color.White)
     }
 }
 

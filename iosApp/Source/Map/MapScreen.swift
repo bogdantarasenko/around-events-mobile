@@ -20,27 +20,26 @@ struct MapScreen: View {
             store.instance.select(ids: ids.map { KotlinLong(value: $0) })
         }
         .ignoresSafeArea()
-        .overlay(alignment: .topLeading) {
-            if !path.isEmpty {
-                GlassCircle(systemImage: "chevron.left", label: strings.back) { path.removeLast() }
-                    .padding(.leading, 20)
-                    .padding(.top, 8)
-            }
-        }
         .overlay(alignment: .bottom) {
             VStack(alignment: .trailing, spacing: 12) {
-                GlassCircle(systemImage: "location.north.line", label: strings.mapTitle) {
+                Button {
                     store.instance.clearSelection()
                     fitToken += 1
+                } label: {
+                    Image(systemName: "location.north.line").font(.body.weight(.semibold)).frame(width: 44, height: 44)
                 }
+                .glassButtonStyle()
+                .buttonBorderShape(.circle)
+                .accessibilityLabel(strings.mapTitle)
                 .padding(.trailing, 22)
                 MapSheet(state: state, expanded: $expanded, onClose: { store.instance.clearSelection() }) { id in
                     path.append(.eventDetail(id))
                 }
             }
-            .padding(.bottom, 78)
+            .padding(.bottom, 8)
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(path.isEmpty ? .hidden : .visible, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .task {
             for await value in store.instance.state {
                 self.state = value

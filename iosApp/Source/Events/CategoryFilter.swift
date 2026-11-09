@@ -20,13 +20,13 @@ struct CategoryFilter: View {
                             Text(Labels.category(item.key, strings)).foregroundStyle(isOn ? Palette.surface : Palette.chipText)
                             Text("\(item.count)").foregroundStyle(isOn ? Palette.surface.opacity(0.7) : Palette.chipCount)
                         }
-                        .font(.system(size: 14.5))
+                        .font(.subheadline)
                         .padding(.horizontal, 11)
-                        .frame(height: 33.5)
+                        .frame(minHeight: 33.5)
                         .background(isOn ? Palette.ink : Palette.surface, in: Capsule())
                         .overlay(Capsule().stroke(Palette.chipBorder, lineWidth: isOn ? 0 : 1))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                     .accessibilityAddTraits(isOn ? .isSelected : [])
                 }
             }

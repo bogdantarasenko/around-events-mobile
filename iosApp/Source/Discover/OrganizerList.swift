@@ -19,12 +19,10 @@ struct OrganizerList: View {
                             Avatar(url: organizer.avatarUrl, name: organizer.name, size: 60, cornerRadius: 10)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(organizer.name)
-                                    .font(.system(size: 17, weight: .medium))
-                                    .tracking(-0.43)
+                                    .font(.body.weight(.medium))
                                     .foregroundStyle(Palette.ink)
                                 Text(organizer.bio ?? strings.eventsCount("\(organizer.upcomingCount)"))
-                                    .font(.system(size: 15))
-                                    .tracking(-0.23)
+                                    .font(.subheadline)
                                     .foregroundStyle(Palette.secondary)
                                     .lineLimit(2)
                                     .multilineTextAlignment(.leading)
@@ -33,7 +31,7 @@ struct OrganizerList: View {
                         }
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                 }
             }
             .padding(.horizontal, 20)

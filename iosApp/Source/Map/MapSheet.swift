@@ -15,19 +15,16 @@ struct MapSheet: View {
             Capsule().fill(Palette.chipBorder).frame(width: 36, height: 5).padding(.top, 6)
             ZStack {
                 Text(strings.eventsCount("\(state.sheet.count)"))
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.headline)
                     .foregroundStyle(Palette.ink)
                 HStack {
                     Spacer()
                     if state.isSelection {
                         Button(action: onClose) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(Palette.ink)
-                                .frame(width: 44, height: 44)
-                                .background(Palette.tabSelected, in: Circle())
+                            Image(systemName: "xmark").font(.body.weight(.semibold)).frame(width: 32, height: 32)
                         }
-                        .buttonStyle(.plain)
+                        .glassButtonStyle()
+                        .buttonBorderShape(.circle)
                         .accessibilityLabel(strings.close)
                     }
                 }
@@ -40,11 +37,11 @@ struct MapSheet: View {
                         Button { onOpen(event.id) } label: {
                             EventRow(event: event, compact: false, showsSeparator: index < state.sheet.count - 1)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressable)
                     }
                     if state.unlocated > 0, !state.isSelection {
                         Text(strings.mapUnlocated("\(state.unlocated)"))
-                            .font(.system(size: 13))
+                            .font(.footnote)
                             .foregroundStyle(Palette.secondary)
                             .padding(.vertical, 12)
                     }
@@ -53,7 +50,7 @@ struct MapSheet: View {
             }
         }
         .frame(height: expanded ? 620 : 300)
-        .background(Palette.surface, in: RoundedRectangle(cornerRadius: 34))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 34))
         .shadow(color: .black.opacity(0.12), radius: 16, y: 4)
         .padding(.horizontal, 9)
         .gesture(

@@ -43,22 +43,22 @@ struct EventActions: View {
     private func button(_ item: Item, primary: Bool) -> some View {
         switch item {
         case let .open(title, icon, url):
-            Button { openURL(url) } label: { label(title, icon, primary) }.buttonStyle(.plain)
+            Button { openURL(url) } label: { label(title, icon, primary) }.buttonStyle(.pressable)
         case let .run(title, icon, action):
-            Button(action: action) { label(title, icon, primary) }.buttonStyle(.plain)
+            Button(action: action) { label(title, icon, primary) }.buttonStyle(.pressable)
         case let .share(title, url):
             ShareLink(item: url, subject: Text(event.title)) { label(title, "square.and.arrow.up", primary) }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
         }
     }
 
     private func label(_ title: String, _ systemImage: String, _ primary: Bool) -> some View {
         VStack(spacing: 5) {
-            Image(systemName: systemImage).font(.system(size: 17, weight: .semibold))
-            Text(title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+            Image(systemName: systemImage).font(.body.weight(.semibold))
+            Text(title).font(.footnote.weight(.semibold)).lineLimit(1)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 55)
+        .frame(minHeight: 55)
         .foregroundStyle(primary ? Color(white: 0.08) : Color(white: 0.91))
         .background(primary ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.white.opacity(0.18)), in: RoundedRectangle(cornerRadius: 16))
     }

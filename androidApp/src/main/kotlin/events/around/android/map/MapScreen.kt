@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.NearMe
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +42,7 @@ import events.around.shared.presentation.feed.MapUiState
 import events.around.shared.presentation.feed.MapViewModel
 
 private const val SHEET_FRACTION = 0.38f
-private val SHEET_BOTTOM = 78.dp
+private val SHEET_BOTTOM = 8.dp
 private val MAP_SIDE_PADDING = 40.dp
 
 /** The city's events on an OpenStreetMap map, the list in a panel below. */
@@ -68,20 +69,17 @@ fun MapScreen(
             onSelect = viewModel::select,
             modifier = Modifier.fillMaxSize(),
         )
-        Surface(
-            shape = CircleShape,
-            shadowElevation = 3.dp,
+        FilledTonalIconButton(
+            onClick = {
+                viewModel.clearSelection()
+                fitToken++
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
                 .padding(end = 22.dp, bottom = sheetHeight + SHEET_BOTTOM + 12.dp),
         ) {
-            IconButton(onClick = {
-                viewModel.clearSelection()
-                fitToken++
-            }) {
-                Icon(Icons.Outlined.NearMe, contentDescription = strings.mapTitle)
-            }
+            Icon(Icons.Outlined.NearMe, contentDescription = strings.mapTitle)
         }
         if (navigateBack != null) {
             Surface(

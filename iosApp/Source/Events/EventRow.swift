@@ -17,8 +17,7 @@ struct EventRow: View {
             VStack(alignment: .leading, spacing: 0) {
                 hostLine
                 Text(event.title)
-                    .font(.system(size: 17, weight: .medium))
-                    .tracking(-0.43)
+                    .font(.body.weight(.medium))
                     .foregroundStyle(Palette.ink)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
@@ -63,16 +62,16 @@ struct EventRow: View {
                 PriceBadge(text: price)
             }
         }
-        .font(.system(size: 14))
-        .tracking(-0.15)
+        .font(.subheadline)
         .foregroundStyle(Palette.secondary)
     }
 
     private func meta(_ systemImage: String, _ text: String) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: systemImage).font(.system(size: 13, weight: .medium)).frame(width: 16)
-            Text(text).font(.system(size: 15)).tracking(-0.23).lineLimit(1)
+            Image(systemName: systemImage).imageScale(.small).frame(width: 16)
+            Text(text).lineLimit(1)
         }
+        .font(.subheadline)
         .foregroundStyle(Palette.secondary)
     }
 }

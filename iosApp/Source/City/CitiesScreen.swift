@@ -10,44 +10,29 @@ struct CitiesScreen: View {
 
     var body: some View {
         let state = state ?? discover.state.value
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(strings.citiesIntro)
-                    .font(.system(size: 15))
-                    .foregroundStyle(Palette.secondary)
-                    .padding(.bottom, 14)
+        List {
+            Section {
                 ForEach(Array(state.cities.enumerated()), id: \.element.slug) { index, city in
-                    Button { path.append(.city(slug: city.slug)) } label: {
+                    NavigationLink(value: AppRoute.city(slug: city.slug)) {
                         HStack(spacing: 12) {
                             Image(systemName: "building.columns.fill")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.footnote.weight(.semibold))
                                 .foregroundStyle(.white)
                                 .frame(width: 32, height: 32)
                                 .background(CityStyle.color(index), in: Circle())
-                            Text(city.name).font(.system(size: 17)).foregroundStyle(Palette.ink)
+                            Text(city.name).foregroundStyle(Palette.ink)
                             Spacer()
-                            Text(strings.eventsCount("\(city.upcomingCount)"))
-                                .font(.system(size: 17))
-                                .foregroundStyle(Palette.tertiary)
+                            Text(strings.eventsCount("\(city.upcomingCount)")).foregroundStyle(Palette.tertiary)
                         }
-                        .padding(.vertical, 8)
-                        .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
                 }
+            } header: {
+                Text(strings.citiesIntro).textCase(nil)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 100)
         }
-        .safeAreaInset(edge: .top) {
-            ZStack {
-                Text(strings.discoverCities).font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.ink)
-                TopBar(path: $path)
-            }
-            .padding(.bottom, 8)
-            .background(Palette.surface)
-        }
-        .toolbar(.hidden, for: .navigationBar)
+        .listStyle(.plain)
+        .navigationTitle(strings.discoverCities)
+        .navigationBarTitleDisplayMode(.inline)
         .task {
             for await value in discover.state {
                 self.state = value

@@ -1,31 +1,50 @@
 import AroundKit
 import SwiftUI
 
-/// Three tabs, each with its own navigation stack, under the floating bar from the designs.
+/// The system tab bar — on iOS 26 the floating glass bar of the designs — with a navigation stack per tab.
 struct HomeScreen: View {
     @StateObject private var discoverStore = VMStoreOwner<DiscoverViewModel>(Deps.shared.getDiscoverViewModel())
+    @Environment(\.strings) private var strings
     @State private var tab: AppTab = .home
     @State private var homePath: [AppRoute] = []
     @State private var discoverPath: [AppRoute] = []
     @State private var mapPath: [AppRoute] = []
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            switch tab {
-            case .home:
-                stack($homePath) { HomeFeedScreen(discover: discoverStore.instance, path: $homePath) }
-            case .discover:
-                stack($discoverPath) {
-                    DiscoverScreen(viewModel: discoverStore.instance, path: $discoverPath) { tab = .map }
-                }
-            case .map:
-                stack($mapPath) { MapScreen(path: $mapPath) }
+        TabView(selection: $tab) {
+            stack($homePath) { HomeFeedScreen(discover: discoverStore.instance, path: $homePath) }
+                .tabItem { Label(strings.tabHome, systemImage: "house.fill") }
+                .tag(AppTab.home)
+            stack($discoverPath) {
+                DiscoverScreen(viewModel: discoverStore.instance, path: $discoverPath) { tab = .map }
             }
-            FloatingTabBar(selection: $tab, dark: currentPath.last.map(isDark) ?? false)
-                .padding(.bottom, 8)
+            .tabItem { Label(strings.tabDiscover, systemImage: "safari.fill") }
+            .tag(AppTab.discover)
+            stack($mapPath) { MapScreen(path: $mapPath) }
+                .tabItem { Label(strings.tabMap, systemImage: "map.fill") }
+                .tag(AppTab.map)
         }
-        .ignoresSafeArea(.keyboard)
+        // Ink, not the brand orange: the designs mark the selected tab and toolbar icons in black.
+        .tint(Palette.ink)
         .onAppear(perform: openFromLaunchArguments)
+    }
+
+    private func stack<Root: View>(_ path: Binding<[AppRoute]>, @ViewBuilder root: () -> Root) -> some View {
+        NavigationStack(path: path) {
+            root()
+                .navigationDestination(for: AppRoute.self) { route in
+                    switch route {
+                    case let .eventDetail(id): EventDetailScreen(eventId: id, path: path)
+                    case let .events(category): EventsScreen(category: category, path: path)
+                    case .cities: CitiesScreen(discover: discoverStore.instance, path: path)
+                    case let .city(slug): CityScreen(slug: slug, path: path)
+                    case let .organizer(slug): OrganizerScreen(slug: slug, path: path)
+                    case .map: MapScreen(path: path)
+                    case .search: SearchScreen(path: path)
+                    case .settings: SettingsScreen()
+                    }
+                }
+        }
     }
 
     // Debug builds only: `-AroundTab discover|map` and `-AroundRoute event:<id>|organizer:<slug>|events:<category>|city:<slug>|cities|search|settings`
@@ -52,37 +71,5 @@ struct HomeScreen: View {
         }
         if let target { homePath.append(target) }
         #endif
-    }
-
-    private var currentPath: [AppRoute] {
-        switch tab {
-        case .home: homePath
-        case .discover: discoverPath
-        case .map: mapPath
-        }
-    }
-
-    // The event page is dark; the bar goes glass-on-dark over it, as in the designs.
-    private func isDark(_ route: AppRoute) -> Bool {
-        if case .eventDetail = route { return true }
-        return false
-    }
-
-    private func stack<Root: View>(_ path: Binding<[AppRoute]>, @ViewBuilder root: () -> Root) -> some View {
-        NavigationStack(path: path) {
-            root()
-                .navigationDestination(for: AppRoute.self) { route in
-                    switch route {
-                    case let .eventDetail(id): EventDetailScreen(eventId: id, path: path)
-                    case let .events(category): EventsScreen(category: category, path: path)
-                    case .cities: CitiesScreen(discover: discoverStore.instance, path: path)
-                    case let .city(slug): CityScreen(slug: slug, path: path)
-                    case let .organizer(slug): OrganizerScreen(slug: slug, path: path)
-                    case .map: MapScreen(path: path)
-                    case .search: SearchScreen(path: path)
-                    case .settings: SettingsScreen(path: path)
-                    }
-                }
-        }
     }
 }

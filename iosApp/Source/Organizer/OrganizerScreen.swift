@@ -30,8 +30,8 @@ struct OrganizerScreen: View {
                 }
             }
         }
-        .overlay(alignment: .top) { TopBar(path: $path) }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .task {
             for await value in store.instance.state {
                 self.state = value

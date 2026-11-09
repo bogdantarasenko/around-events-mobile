@@ -24,7 +24,6 @@ struct EventDetailScreen: View {
                 ContentUnavailableView(strings.eventGone, systemImage: "calendar.badge.exclamationmark")
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
         .task {
             for await value in store.instance.state {
                 self.state = value
@@ -37,12 +36,10 @@ struct EventDetailScreen: View {
             VStack(alignment: .leading, spacing: 0) {
                 EventPosterCard(event: event)
                 Text(event.title)
-                    .font(.system(size: 26, weight: .bold))
-                    .tracking(0.17)
+                    .font(.title.weight(.bold))
                     .padding(.top, 16)
                 Text(Dates.when(event, strings: strings, locale: locale))
-                    .font(.system(size: 16))
-                    .tracking(-0.31)
+                    .font(.callout)
                     .foregroundStyle(Color(white: 0.7))
                     .padding(.top, 8)
                 EventActions(event: event) { MapLink.open(event, openURL: openURL) }.padding(.top, 18)
@@ -50,32 +47,22 @@ struct EventDetailScreen: View {
                     .padding(.top, 22)
             }
             .padding(.horizontal, 20)
-            .padding(.top, 56)
+            .padding(.top, 8)
             .padding(.bottom, 110)
             .foregroundStyle(.white)
         }
         .scrollIndicators(.hidden)
         .background(EventBackdrop(event: event))
-        .overlay(alignment: .top) {
-            HStack {
-                GlassCircle(systemImage: "chevron.left", label: strings.back, dark: true) {
-                    if !path.isEmpty { path.removeLast() }
-                }
-                Spacer()
-                if let shared = Links.url(event.postUrl ?? event.eventUrl) {
-                    ShareLink(item: shared, subject: Text(event.title)) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: Circle())
-                            .background(Color.white.opacity(0.16), in: Circle())
-                            .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1.2))
-                    }
-                    .accessibilityLabel(strings.share)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            if let shared = Links.url(event.postUrl ?? event.eventUrl) {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ShareLink(item: shared, subject: Text(event.title)) { Image(systemName: "square.and.arrow.up") }
+                        .accessibilityLabel(strings.share)
                 }
             }
-            .padding(.horizontal, 20)
         }
         .environment(\.colorScheme, .dark)
     }

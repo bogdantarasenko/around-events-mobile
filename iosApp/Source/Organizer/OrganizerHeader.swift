@@ -21,12 +21,12 @@ struct OrganizerHeader: View {
                 Spacer()
                 if let follow = organizer.followUrl.flatMap(URL.init(string:)) {
                     Button(strings.follow) { openURL(follow) }
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(Palette.surface)
                         .padding(.horizontal, 11)
-                        .frame(height: 33)
+                        .frame(minHeight: 33)
                         .background(Palette.ink, in: Capsule())
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressable)
                 }
             }
             .padding(.leading, 16.5)
@@ -35,22 +35,20 @@ struct OrganizerHeader: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 Text(organizer.name)
-                    .font(.system(size: 22, weight: .bold))
-                    .tracking(-0.26)
+                    .font(.title2.weight(.bold))
                     .foregroundStyle(Palette.ink)
                 if let bio = organizer.bio, !bio.isEmpty {
                     Text(bio)
-                        .font(.system(size: 15))
-                        .tracking(-0.23)
+                        .font(.subheadline)
                         .foregroundStyle(Palette.secondary)
                         .padding(.top, 7)
                 }
                 HStack(spacing: 8) {
-                    Image(systemName: "calendar").font(.system(size: 14))
+                    Image(systemName: "calendar").imageScale(.small)
                     Text([organizer.pastCount > 0 ? strings.pastCount("\(organizer.pastCount)") : nil,
                           strings.eventsCount("\(organizer.events.count)")].compactMap { $0 }.joined(separator: " · "))
                 }
-                .font(.system(size: 15))
+                .font(.subheadline)
                 .foregroundStyle(Palette.weekday)
                 .padding(.top, 10)
                 links.padding(.top, 14)
@@ -90,8 +88,8 @@ struct OrganizerHeader: View {
     @ViewBuilder
     private func link(_ raw: String?, systemImage: String) -> some View {
         if let url = raw.flatMap(URL.init(string:)) {
-            Button { openURL(url) } label: { Image(systemName: systemImage).font(.system(size: 17)) }
-                .buttonStyle(.plain)
+            Button { openURL(url) } label: { Image(systemName: systemImage).font(.body) }
+                .buttonStyle(.pressable)
         }
     }
 }

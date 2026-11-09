@@ -22,7 +22,7 @@ struct UpcomingShelf: View {
                                 } label: {
                                     EventRow(event: event, compact: true, showsSeparator: index < column.count - 1)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.pressable)
                             }
                         }
                         // The design's 333pt column on a 393pt screen: 20 margin, 20 gap, 20 of the next.

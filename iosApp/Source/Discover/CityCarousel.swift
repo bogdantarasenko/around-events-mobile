@@ -20,7 +20,7 @@ struct CityCarousel: View {
                         } label: {
                             card(city, index: index)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressable)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -41,8 +41,7 @@ struct CityCarousel: View {
                 .padding(.leading, 12)
                 .padding(.top, 11)
             Text(city.name)
-                .font(.system(size: 19, weight: .medium))
-                .tracking(-0.44)
+                .font(.title3.weight(.medium))
                 .foregroundStyle(.white)
                 .padding(12)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)

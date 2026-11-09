@@ -6,7 +6,7 @@ struct PriceBadge: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 12, weight: .medium))
+            .font(.caption.weight(.medium))
             .foregroundStyle(Palette.price)
             .padding(.horizontal, 6)
             .padding(.vertical, 1.5)

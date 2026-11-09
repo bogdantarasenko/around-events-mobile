@@ -31,7 +31,6 @@ struct SectionTitle: View {
                 Text(subtitle).foregroundStyle(Palette.tertiary)
             }
         }
-        .font(.system(size: 20, weight: .semibold))
-        .tracking(-0.45)
+        .font(.title3.weight(.semibold))
     }
 }

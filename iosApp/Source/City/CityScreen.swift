@@ -32,8 +32,9 @@ struct CityScreen: View {
         .listStyle(.plain)
         .scrollIndicators(.hidden)
         .ignoresSafeArea(edges: .top)
-        .overlay(alignment: .top) { TopBar(path: $path) }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .refreshable { store.instance.refresh() }
         .task {
             for await value in store.instance.state {
@@ -47,24 +48,25 @@ struct CityScreen: View {
             LinearGradient(colors: CityStyle.colors(index), startPoint: .topLeading, endPoint: .bottomTrailing)
             LinearGradient(colors: [.clear, .black.opacity(0.75)], startPoint: .top, endPoint: .bottom)
             VStack(alignment: .leading, spacing: 4) {
-                Text(strings.cityWhatsOn).font(.system(size: 15)).foregroundStyle(.white.opacity(0.75))
-                Text(state.city?.name ?? "").font(.system(size: 34, weight: .bold)).foregroundStyle(.white)
+                Text(strings.cityWhatsOn).font(.subheadline).foregroundStyle(.white.opacity(0.75))
+                Text(state.city?.name ?? "").font(.largeTitle.weight(.bold)).foregroundStyle(.white)
                 Text(strings.eventsCount("\(state.count)"))
-                    .font(.system(size: 15))
+                    .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.75))
                     .padding(.top, 6)
                 Button {
                     store.instance.makeCurrent()
                 } label: {
                     Text(state.isCurrentCity ? strings.cityIsCurrent : strings.cityMakeCurrent)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 11)
-                        .frame(height: 33)
+                        .frame(minHeight: 33)
                         .background(state.isCurrentCity ? Color.white.opacity(0.2) : Color.green.opacity(0.85), in: Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
                 .disabled(state.isCurrentCity)
+                .sensoryFeedback(.success, trigger: state.isCurrentCity)
                 .padding(.top, 14)
             }
             .padding(20)

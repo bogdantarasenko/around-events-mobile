@@ -31,21 +31,20 @@ struct CategoryGrid: View {
                 } label: {
                     HStack(spacing: 8.5) {
                         Image(systemName: CategoryStyle.symbol(item.key))
-                            .font(.system(size: 15, weight: .medium))
+                            .font(.subheadline.weight(.medium))
                             .foregroundStyle(CategoryStyle.tint(item.key))
                             .frame(width: 22, height: 22)
                         Text(Labels.category(item.key, strings))
-                            .font(.system(size: 15))
-                            .tracking(-0.23)
+                            .font(.subheadline)
                             .foregroundStyle(Palette.ink)
                     }
                     .padding(.leading, 10.5)
                     .padding(.trailing, 13)
-                    .frame(height: 38.5)
+                    .frame(minHeight: 38.5)
                     .background(Palette.surface, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.chipBorder, lineWidth: 1))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
             }
         }
     }
