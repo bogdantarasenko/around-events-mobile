@@ -22,16 +22,14 @@ class SettingsViewModel(
     val state: StateFlow<SettingsUiState> = combine(
         settingsRepository.theme,
         settingsRepository.language,
-        settingsRepository.defaultOrganization,
-        settingsRepository.defaultCity,
+        settingsRepository.city,
         site.props,
-    ) { theme, language, organization, city, props ->
+    ) { theme, language, city, props ->
         SettingsUiState(
             theme = theme,
             language = language,
             versionName = config.versionName,
-            defaultOrganization = organization,
-            defaultCity = city,
+            city = city,
             cities = props?.cities.orEmpty(),
             siteUrl = config.baseUrl,
         )
@@ -42,8 +40,7 @@ class SettingsViewModel(
             theme = settingsRepository.theme.value,
             language = settingsRepository.language.value,
             versionName = config.versionName,
-            defaultOrganization = settingsRepository.defaultOrganization.value,
-            defaultCity = settingsRepository.defaultCity.value,
+            city = settingsRepository.city.value,
             cities = site.props.value?.cities.orEmpty(),
             siteUrl = config.baseUrl,
         ),
@@ -53,18 +50,16 @@ class SettingsViewModel(
 
     fun onLanguageSelected(language: AppLanguage) = settingsRepository.setLanguage(language)
 
-    fun onDefaultOrganizationChanged(organization: String) = settingsRepository.setDefaultOrganization(organization)
-
-    fun onDefaultCitySelected(slug: String) = settingsRepository.setDefaultCity(slug)
+    fun onCitySelected(slug: String) = settingsRepository.setCity(slug)
 }
 
 data class SettingsUiState(
     val theme: ThemeMode,
     val language: AppLanguage,
     val versionName: String,
-    val defaultOrganization: String = "",
-    val defaultCity: String? = null,
+    /** The stored city; the feed falls back to the first one while this is null. */
+    val city: String? = null,
     val cities: List<City> = emptyList(),
-    /** For the rules page, `<siteUrl>/rules`. */
+    /** The mini-app outside Telegram, where events are submitted; also `<siteUrl>/rules`. */
     val siteUrl: String = "",
 )

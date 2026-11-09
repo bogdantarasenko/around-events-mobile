@@ -28,7 +28,7 @@ class SettingsViewModelTest {
 
     // Settings never call the network; the engine only has to exist.
     private fun site(settings: MapSettings) = SiteRepository(
-        AroundApi(createHttpClient(MockEngine { respondError(HttpStatusCode.NotFound) }, config) { null }),
+        AroundApi(createHttpClient(MockEngine { respondError(HttpStatusCode.NotFound) }, config)),
         settings,
     )
 

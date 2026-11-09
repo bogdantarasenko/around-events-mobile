@@ -17,22 +17,14 @@ class SettingsRepository(
     private val mutableLanguage = MutableStateFlow(readEnum(LANGUAGE_KEY, AppLanguage.System))
     val language: StateFlow<AppLanguage> = mutableLanguage.asStateFlow()
 
-    private val mutableDefaultOrganization = MutableStateFlow(settings.getString(ORGANIZATION_KEY, ""))
+    private val mutableCity = MutableStateFlow(settings.getStringOrNull(CITY_KEY))
 
-    /** Fills "Organization" in a new submission. Set by hand, or taken from the last one sent. */
-    val defaultOrganization: StateFlow<String> = mutableDefaultOrganization.asStateFlow()
+    /** The city whose listing the feed shows; null until the person picks one. */
+    val city: StateFlow<String?> = mutableCity.asStateFlow()
 
-    private val mutableDefaultCity = MutableStateFlow(settings.getStringOrNull(CITY_KEY))
-    val defaultCity: StateFlow<String?> = mutableDefaultCity.asStateFlow()
-
-    fun setDefaultOrganization(organization: String) {
-        settings.putString(ORGANIZATION_KEY, organization.trim())
-        mutableDefaultOrganization.value = organization.trim()
-    }
-
-    fun setDefaultCity(slug: String) {
+    fun setCity(slug: String) {
         settings.putString(CITY_KEY, slug)
-        mutableDefaultCity.value = slug
+        mutableCity.value = slug
     }
 
     fun setTheme(theme: ThemeMode) {
@@ -54,7 +46,6 @@ class SettingsRepository(
     private companion object {
         const val THEME_KEY = "theme"
         const val LANGUAGE_KEY = "language"
-        const val ORGANIZATION_KEY = "default_organization"
-        const val CITY_KEY = "default_city"
+        const val CITY_KEY = "city"
     }
 }

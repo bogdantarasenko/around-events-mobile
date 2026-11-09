@@ -24,46 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
-import events.around.core.model.EventStatus
-
-// Badge colours per status: what needs attention stands out, what is settled stays quiet.
-private val ReviewContainer = Color(0xFFFFF1D6)
-private val ReviewContent = Color(0xFF8A5A00)
-private val QueuedContainer = Color(0xFFE3F0FF)
-private val QueuedContent = Color(0xFF0B57D0)
-private val ListedContainer = Color(0xFFDDF5E3)
-private val ListedContent = Color(0xFF1E7B34)
-private val OffContainer = Color(0xFFFDE2E1)
-private val OffContent = Color(0xFFB3261E)
-
-@Composable
-fun StatusBadge(
-    status: EventStatus,
-    label: String,
-    modifier: Modifier = Modifier,
-) {
-    val (container, content) = when (status) {
-        EventStatus.Review -> ReviewContainer to ReviewContent
-        EventStatus.Queued -> QueuedContainer to QueuedContent
-        EventStatus.Published, EventStatus.Duplicate -> ListedContainer to ListedContent
-        EventStatus.Rejected, EventStatus.Cancelled -> OffContainer to OffContent
-    }
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelSmall,
-        color = content,
-        modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(container)
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    )
-}
 
 @Composable
 fun Poster(
@@ -151,6 +116,11 @@ fun Context.openUrl(url: String) {
     } catch (_: ActivityNotFoundException) {
         runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
     }
+}
+
+/** In whatever app handles the link, such as maps for `geo:`. */
+fun Context.openExternal(url: String) {
+    runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
 }
 
 fun Context.shareText(text: String, title: String? = null) {

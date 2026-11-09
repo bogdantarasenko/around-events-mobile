@@ -2,32 +2,19 @@ import AroundKit
 import SwiftUI
 
 struct SettingsScreen: View {
-    let onSignOut: () -> Void
     @Environment(\.strings) private var strings
     @Environment(\.openURL) private var openURL
     @StateObject private var store = VMStoreOwner<SettingsViewModel>(Deps.shared.getSettingsViewModel())
     @State private var state: SettingsUiState?
-    @State private var organization: String?
 
     var body: some View {
         let state = state ?? store.instance.state.value
         Form {
-            Section(strings.settingsNewSubmission) {
-                // Local copy so typing isn't fought by the trimmed value the setting stores.
-                TextField(
-                    strings.formOrganization,
-                    text: Binding(
-                        get: { organization ?? state.defaultOrganization },
-                        set: {
-                            organization = $0
-                            store.instance.onDefaultOrganizationChanged(organization: $0)
-                        }
-                    )
-                )
-                if state.cities.count > 1 {
-                    Picker(strings.formCity, selection: Binding(
-                        get: { state.defaultCity ?? state.cities.first?.slug ?? "" },
-                        set: { store.instance.onDefaultCitySelected(slug: $0) }
+            if state.cities.count > 1 {
+                Section {
+                    Picker(strings.feedCity, selection: Binding(
+                        get: { state.city ?? state.cities.first?.slug ?? "" },
+                        set: { store.instance.onCitySelected(slug: $0) }
                     )) {
                         ForEach(state.cities, id: \.slug) { Text($0.name).tag($0.slug) }
                     }
@@ -58,17 +45,11 @@ struct SettingsScreen: View {
             }
 
             Section(strings.settingsAbout) {
-                Button(strings.settingsRules) {
-                    if let url = URL(string: state.siteUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/")) + "/rules") {
-                        openURL(url)
-                    }
-                }
+                Button(strings.feedSubmit) { openURL(Site.submit) }
+                Button(strings.settingsRules) { openURL(Site.rules) }
                 Text(strings.settingsVersion(state.versionName))
+                Text(strings.feedSubmitHint).font(.footnote).foregroundStyle(.secondary)
                 Text(strings.settingsOpenSource).font(.footnote).foregroundStyle(.secondary)
-            }
-
-            Section {
-                Button(strings.signOut, role: .destructive, action: onSignOut)
             }
         }
         .navigationTitle(strings.settingsTitle)

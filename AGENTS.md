@@ -5,7 +5,11 @@
 Around is the mobile client for around.events: Android (Jetpack Compose) and iOS (SwiftUI) on top of
 shared Kotlin Multiplatform logic. It started from FeedFlow; only the build setup and the KMP-to-Swift
 bridge were kept (see `NOTICE`). The product scope is `../around-events-mobile-prd.md`; the backend
-is `../around-events`. Build only on endpoints that backend already has.
+is `../around-events`.
+
+The app is the reader side: a city's listing by day (`GET /api/cities/{city}/events`). It does not repeat
+what the Telegram mini-app already does — submitting, the organizer cabinet, the organizer page — and
+links to the mini-app for those instead.
 
 ## Modules
 
@@ -42,8 +46,8 @@ library is pinned to lifecycle 2.10.0).
   `Routes.kt`, `entry<Route>` in `MainActivity`.
 - Strings: never hardcode user-visible text. Add the key to all four `strings.xml` files.
   Compose: `LocalAroundStrings.current`; SwiftUI: `@Environment(\.strings)`.
-- Network: use the Koin `HttpClient`; it adds the base URL and the `Authorization` header from
-  `AuthorizationProvider`. JSON uses `apiJson` (unknown keys ignored).
+- Network: use the Koin `HttpClient`; it adds the base URL. Every endpoint the app calls is public.
+  JSON uses `apiJson` (unknown keys ignored).
 - Business logic in `shared` gets unit tests in `commonTest` (Turbine for flows, fakes over mocks,
   `MapSettings` for preferences, Ktor `MockEngine` for HTTP).
 
@@ -51,19 +55,15 @@ library is pinned to lifecycle 2.10.0).
 
 - A Kotlin enum entry `New` reaches Swift as `.theNew` (`new` is reserved in Objective-C).
 - Anything named `description` collides with `NSObject.description` and comes out as `description_`
-  (`MyEvent.description_`). Don't name new enum entries `Description`; `FormField.DescriptionText` exists
-  for this reason.
+  (`Event.description_`). Don't name new enum entries `Description`.
 - A `List<Pair<String, String>>` constant such as `EVENT_LANGUAGES` is `VocabularyKt.EVENT_LANGUAGES`, an array
   of `KotlinPair` whose `first`/`second` need `as String?`.
 
-## Checking the cabinet without a Telegram account
+## Checking offline behaviour
 
-Signing in needs a real Telegram account. To look at the signed-in screens in the simulator, build against an
-unreachable server (`xcodebuild … 'AROUND_BASE_URL=http://127.0.0.1:9' build`) and seed `UserDefaults` with
-`xcrun simctl spawn <udid> defaults write events.around.app.debug <key> -string '<json>'` for the keys
-`telegram_login` (a `TelegramLogin` with a fresh `authDate`), `my_events` (a JSON list in the
-`MyEventResource` shape) and `site_props`. Requests then fail as offline instead of 401, and the app shows the
-cache.
+The feed caches each city's listing in settings (`feed_<slug>`, plus `site_props` for the cities). To see the
+offline state in the simulator, open the app once online, then rebuild against an unreachable server
+(`xcodebuild … 'AROUND_BASE_URL=http://127.0.0.1:9' build`): the cached listing shows with the offline banner.
 
 ## Rules
 

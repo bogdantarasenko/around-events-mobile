@@ -1,109 +1,78 @@
 package events.around.shared.data.network
 
 import events.around.core.model.City
-import events.around.core.model.EventStatus
 import events.around.shared.AppConfig
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
+import io.ktor.client.request.HttpResponseData
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.OutgoingContent
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class AroundApiTest {
     private val requests = mutableListOf<HttpRequestData>()
 
-    private fun api(
-        authorization: String? = "tglogin sig",
-        handler: suspend MockRequestHandleScope.(HttpRequestData) -> io.ktor.client.request.HttpResponseData,
-    ): AroundApi {
+    private fun api(handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData): AroundApi {
         val engine = MockEngine { request ->
             requests += request
             handler(request)
         }
         val config = AppConfig(baseUrl = "https://around.test", versionName = "1", isDebug = false)
-        return AroundApi(createHttpClient(engine, config) { authorization })
+        return AroundApi(createHttpClient(engine, config))
     }
 
     private fun MockRequestHandleScope.json(body: String, status: HttpStatusCode = HttpStatusCode.OK) =
         respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
 
     @Test
-    fun `my events are read from the data envelope with the signature attached`() = runTest {
+    fun `city events are read from the data envelope`() = runTest {
         val api = api {
             json(
-                """{"data":[{"id":3,"status":"published","title":"T","city":{"slug":"krakow","name":"Kraków"},""" +
-                    """"posts":[{"target":"telegram","url":"https://t.me/c/1"}],"future_field":1}]}""",
+                """{"data":[{"id":3,"title":"T","city":{"slug":"warsaw","name":"Warszawa"},""" +
+                    """"start_date":"2026-12-01","price_from":"34.00","currency":"PLN","category":"games",""" +
+                    """"organizer":{"slug":"rij","name":"Рій","url":"https://around.test/o/rij"},"future_field":1}]}""",
             )
         }
 
-        val events = api.myEvents()
+        val event = api.cityEvents("warsaw").single()
 
-        assertEquals(EventStatus.Published, events.single().status)
-        assertEquals("https://t.me/c/1", events.single().telegramPost?.url)
-        assertEquals("https://around.test/api/me/events", requests.single().url.toString())
-        assertEquals("tglogin sig", requests.single().headers[HttpHeaders.Authorization])
-    }
-
-    @Test
-    fun `submission is multipart with the poster file`() = runTest {
-        val api = api { json("""{"event_id":9,"status":"review","message":"ok","post_url":null}""") }
-
-        val receipt = api.submit(
-            listOf("title" to "T", "languages[]" to "uk"),
-            PosterUpload(byteArrayOf(1, 2, 3), "poster.jpg", "image/jpeg"),
-        )
-
-        assertEquals("review", receipt.status)
-        val body = requests.single().body as OutgoingContent
-        assertTrue(body.contentType.toString().startsWith("multipart/form-data"))
-    }
-
-    @Test
-    fun `errors keep the server's words and field`() {
-        assertEquals(
-            ApiError.Rejected("Too far", "repeat_until"),
-            errorOf(422, """{"message":"The given data was invalid","errors":{"repeat_until":["Too far"]}}"""),
-        )
-        assertEquals(
-            ApiError.Rejected("Already in the listing", "start_date"),
-            errorOf(422, """{"message":"Already in the listing","field":"start_date"}"""),
-        )
-        assertEquals(ApiError.Conflict("Already published"), errorOf(409, """{"message":"Already published"}"""))
-        assertEquals(ApiError.Unauthorized, errorOf(401, "<html>"))
-        assertEquals(ApiError.TooMany, errorOf(429, ""))
-        assertEquals(ApiError.Server(500), errorOf(500, ""))
+        assertEquals("games", event.category)
+        assertEquals("PLN", event.currency)
+        assertEquals("Рій", event.organizer?.name)
+        assertNull(event.postUrl)
+        assertEquals("https://around.test/api/cities/warsaw/events", requests.single().url.toString())
     }
 
     @Test
     fun `failed request throws the mapped error`() = runTest {
-        val api = api { json("""{"message":"Can't cancel"}""", HttpStatusCode.Conflict) }
+        val api = api { json("""{"message":"Not Found"}""", HttpStatusCode.NotFound) }
 
-        val error = assertFailsWith<ApiException> { api.cancelEvent(1) }.error
-
-        assertEquals(ApiError.Conflict("Can't cancel"), error)
+        assertEquals(ApiError.NotFound, assertFailsWith<ApiException> { api.cityEvents("atlantis") }.error)
+        assertEquals(ApiError.TooMany, errorOf(429))
+        assertEquals(ApiError.Server(500), errorOf(500))
     }
 
     @Test
-    fun `no organizer page reads as null`() = runTest {
-        assertNull(api { json("""{"data":null}""") }.organizer())
+    fun `no answer reads as offline`() = runTest {
+        val api = api { throw IllegalStateException("no route") }
+
+        assertEquals(ApiError.Offline, assertFailsWith<ApiException> { api.cityEvents("warsaw") }.error)
     }
 
     @Test
-    fun `cities and bot id come from the page props`() {
+    fun `cities come from the page props`() {
         val html = """<html><body><script data-page="app" type="application/json">""" +
             """{"component":"mini-app","props":{"cities":[{"slug":"krakow","name":"Kraków"}],"botId":9161757426}}""" +
             """</script><div id="app"></div></body></html>"""
 
-        assertEquals(SiteProps(listOf(City("krakow", "Kraków")), 9161757426), parseSiteProps(html))
+        assertEquals(SiteProps(listOf(City("krakow", "Kraków"))), parseSiteProps(html))
         assertFailsWith<ApiException> { parseSiteProps("<html></html>") }
     }
 }

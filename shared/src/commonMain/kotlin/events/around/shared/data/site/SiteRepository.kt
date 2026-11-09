@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Cities and the bot id, read from the site and kept for the next start so the app works offline. */
+/** The cities, read from the site and kept for the next start so the app works offline. */
 class SiteRepository(
     private val api: AroundApi,
     private val settings: Settings,

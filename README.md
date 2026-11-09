@@ -1,7 +1,8 @@
 # Around
 
-Mobile client for [around.events](https://around.events): organizers submit events to the city listings,
-follow what happened to them, and keep their public page. Android and iOS, shared logic in Kotlin Multiplatform.
+Mobile client for [around.events](https://around.events): what's on in the city, by day, with a category
+filter and offline cache. Submitting events stays in the around.events Telegram mini-app, which the app links to.
+Android and iOS, shared logic in Kotlin Multiplatform.
 
 Product scope lives in the PRD: `../around-events-mobile-prd.md`. The backend is `../around-events` (Laravel).
 
