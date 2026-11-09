@@ -10,14 +10,10 @@ struct Avatar: View {
     var body: some View {
         Group {
             if let url, let parsed = URL(string: url) {
-                // Telegram's picture links expire and then answer 404 with an empty image: only a real success
-                // replaces the letter.
-                AsyncImage(url: parsed) { phase in
-                    if case let .success(image) = phase {
-                        image.resizable().scaledToFill()
-                    } else {
-                        letter
-                    }
+                RemoteImage(url: parsed) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    letter
                 }
             } else {
                 letter
