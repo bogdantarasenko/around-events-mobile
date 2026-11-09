@@ -102,4 +102,7 @@
     <string name="map_my_location">My location</string>
     <string name="map_show_all">Show all events</string>
     <string name="location_permission">Location shows where you are among the events on the map.</string>
+    <string name="period_weekend">Weekend</string>
+    <string name="map_on_map">%s of %s on the map</string>
+    <string name="map_empty">No events on the map for this time</string>
 </resources>

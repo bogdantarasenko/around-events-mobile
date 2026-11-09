@@ -11,6 +11,14 @@ struct MapPlace: Identifiable {
         events.count > 1 ? "\(events[0].title) +\(events.count - 1)" : events[0].title
     }
 
+    /// The map label: the first event's title and time, and how many more are here.
+    var label: String {
+        let first = events[0]
+        let title = first.title.count > 32 ? String(first.title.prefix(30)) + "…" : first.title
+        let more = events.count > 1 ? " +\(events.count - 1)" : ""
+        return [title + more, first.startTime].compactMap { $0 }.joined(separator: " · ")
+    }
+
     /// Groups by the point rounded to about ten metres, keeping the feed's order inside a place.
     static func group(_ events: [Event]) -> [MapPlace] {
         var order: [String] = []

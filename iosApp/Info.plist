@@ -31,6 +31,8 @@
 	<string>Location shows where you are among the events on the map.</string>
 	<key>AroundMapStyleURL</key>
 	<string>https://tiles.openfreemap.org/styles/liberty</string>
+	<key>AroundMapDarkStyleURL</key>
+	<string>https://tiles.openfreemap.org/styles/dark</string>
 	<key>AroundBaseURL</key>
 	<string>$(AROUND_BASE_URL)</string>
 	<key>AroundIsDebug</key>

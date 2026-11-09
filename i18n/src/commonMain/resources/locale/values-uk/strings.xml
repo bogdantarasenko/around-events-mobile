@@ -101,4 +101,7 @@
     <string name="map_my_location">Моє місцезнаходження</string>
     <string name="map_show_all">Показати всі події</string>
     <string name="location_permission">Місцезнаходження показує, де ви серед подій на мапі.</string>
+    <string name="period_weekend">Вихідні</string>
+    <string name="map_on_map">%s з %s на мапі</string>
+    <string name="map_empty">Немає подій на мапі на цей час</string>
 </resources>

@@ -2,6 +2,12 @@ import SwiftUI
 
 /// An icon and a tint per category: the chips on the home screen and the stand-in when an event has no poster.
 enum CategoryStyle {
+    /// Every category with its own colour, for the map's colour lookup.
+    static let keys = [
+        "concert", "music", "standup", "theatre", "party", "festival", "exhibition", "kids", "market", "food",
+        "cinema", "lecture", "learning", "sport", "games", "creative",
+    ]
+
     static func symbol(_ key: String?) -> String {
         switch key {
         case "concert", "music": "music.note"

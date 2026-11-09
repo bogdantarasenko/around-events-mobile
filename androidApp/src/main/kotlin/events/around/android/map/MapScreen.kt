@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -19,7 +20,11 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
@@ -27,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import events.around.android.ui.components.EventRow
 import events.around.android.ui.strings.LocalAroundStrings
 import events.around.android.ui.theme.AroundColors
+import events.around.shared.domain.feed.Period
 import events.around.shared.presentation.feed.MapUiState
 import events.around.shared.presentation.feed.MapViewModel
 
@@ -60,7 +67,8 @@ fun MapScreen(
     val strings = LocalAroundStrings.current
     var fitToken by remember { mutableIntStateOf(0) }
     var locateToken by remember { mutableIntStateOf(0) }
-    var showsList by remember { mutableStateOf(false) }
+    // Saved, not remembered: opening an event leaves this screen, and coming back reopens the list where it was.
+    var showsList by rememberSaveable { mutableStateOf(false) }
     val askLocation = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { granted ->
@@ -72,16 +80,23 @@ fun MapScreen(
     Box(modifier.fillMaxSize()) {
         MapLibreMap(
             events = state.events,
-            padding = MapPadding(left = side, top = side * 2, right = side, bottom = bottom),
+            selected = state.selected.toSet(),
+            padding = MapPadding(left = side, top = side * 3, right = side, bottom = bottom),
             fitToken = fitToken,
             locateToken = locateToken,
             onSelect = {
                 viewModel.select(it)
                 showsList = true
             },
+            onClear = viewModel::clearSelection,
             modifier = Modifier.fillMaxSize(),
         )
-        Column(Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp)) {
+        PeriodRow(
+            state.period,
+            viewModel::selectPeriod,
+            Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(12.dp),
+        )
+        Column(Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 68.dp, end = 12.dp)) {
             if (navigateBack != null) {
                 FilledTonalIconButton(onClick = navigateBack) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
@@ -105,9 +120,18 @@ fun MapScreen(
             ExtendedFloatingActionButton(
                 onClick = { showsList = true },
                 icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
-                text = { Text("${strings.mapList} · ${state.events.size}") },
+                text = { Text(strings.mapOnMap("${state.events.size}", "${state.total}")) },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
             )
+        } else {
+            Surface(
+                shape = CircleShape,
+                tonalElevation = 3.dp,
+                shadowElevation = 3.dp,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+            ) {
+                Text(strings.mapEmpty, modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
+            }
         }
     }
 
@@ -118,11 +142,38 @@ fun MapScreen(
                 showsList = false
                 viewModel.clearSelection()
             },
-            onOpenEvent = {
-                showsList = false
-                onOpenEvent(it)
-            },
+            // The list stays "shown": back from the event, it opens again on the same place.
+            onOpenEvent = onOpenEvent,
         )
+    }
+}
+
+/** Today, tomorrow, the weekend or everything, as Material's segmented buttons. */
+@Composable
+private fun PeriodRow(
+    selected: Period,
+    onSelect: (Period) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val strings = LocalAroundStrings.current
+    val options = listOf(
+        Period.Today to strings.feedToday,
+        Period.Tomorrow to strings.feedTomorrow,
+        Period.Weekend to strings.periodWeekend,
+        Period.All to strings.feedAll,
+    )
+    Surface(shape = CircleShape, shadowElevation = 3.dp, modifier = modifier) {
+        SingleChoiceSegmentedButtonRow(Modifier.padding(4.dp)) {
+            options.forEachIndexed { index, (period, label) ->
+                SegmentedButton(
+                    selected = period == selected,
+                    onClick = { onSelect(period) },
+                    shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                    icon = {},
+                    label = { Text(label, maxLines = 1) },
+                )
+            }
+        }
     }
 }
 

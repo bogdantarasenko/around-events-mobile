@@ -3,7 +3,9 @@ package events.around.shared.domain.feed
 import events.around.core.model.Event
 import events.around.core.model.Repeat
 import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 
 /** One heading of the feed: a day, or the events that started earlier and are still on. */
@@ -100,3 +102,45 @@ fun searchEvents(events: List<Event>, query: String): List<Event> {
         words.all { it in text }
     }
 }
+
+/** When an event is on, for the map's time filter. */
+enum class Period {
+    All,
+    Today,
+    Tomorrow,
+
+    /** The coming Saturday and Sunday; on a weekend, this one. */
+    Weekend,
+}
+
+/** Whether [event] is on during [period], counted from [today] (`yyyy-MM-dd`): any of its days, any repeat. */
+fun isDuring(event: Event, period: Period, today: String): Boolean {
+    if (period == Period.All) return true
+    val from = parse(today) ?: return false
+    val days = when (period) {
+        Period.All -> return true
+        Period.Today -> listOf(from)
+        Period.Tomorrow -> listOf(from.plus(DatePeriod(days = 1)))
+        Period.Weekend -> weekend(from)
+    }
+    return days.any { day -> isOn(event, day, today) }
+}
+
+private fun weekend(from: LocalDate): List<LocalDate> {
+    // Days to Saturday; 0 on Saturday, and Sunday counts as this weekend's second day.
+    val toSaturday = (DayOfWeek.SATURDAY.isoDayNumber - from.dayOfWeek.isoDayNumber + DAYS_IN_WEEK) % DAYS_IN_WEEK
+    if (from.dayOfWeek == DayOfWeek.SUNDAY) return listOf(from)
+    val saturday = from.plus(DatePeriod(days = toSaturday))
+    return listOf(saturday, saturday.plus(DatePeriod(days = 1)))
+}
+
+private fun isOn(event: Event, day: LocalDate, today: String): Boolean {
+    if (event.recurrence != null) {
+        return nextDates(event, today, count = MAX_REPEATS_CHECKED).any { it == day.toString() }
+    }
+    val start = event.startDate?.let(::parse) ?: return false
+    val end = event.lastDay?.let(::parse) ?: start
+    return day in start..end
+}
+
+private const val MAX_REPEATS_CHECKED = 8

@@ -33,6 +33,7 @@ android {
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
         // OpenFreeMap: free vector tiles from OpenStreetMap data, no key.
         buildConfigField("String", "MAP_STYLE_URL", "\"https://tiles.openfreemap.org/styles/liberty\"")
+        buildConfigField("String", "MAP_DARK_STYLE_URL", "\"https://tiles.openfreemap.org/styles/dark\"")
     }
 
     buildFeatures {

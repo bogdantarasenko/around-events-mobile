@@ -106,4 +106,28 @@ class FeedDaysTest {
         assertEquals(listOf(1L), searchEvents(events, "boombox  PROGRESJA").map { it.id })
         assertEquals(emptyList(), searchEvents(events, "   "))
     }
+
+    @Test
+    fun `the period filter counts every day of a run and the next repeat`() {
+        // 2026-11-10 is a Tuesday: the weekend is the 14th and 15th.
+        val today = "2026-11-10"
+        val tonight = event(1, "2026-11-10")
+        val running = event(2, "2026-11-01", end = "2026-11-20")
+        val sunday = event(3, "2026-11-15")
+        val weekly = event(4, "2026-11-04", recurrence = Recurrence("weekly", until = "2026-12-31"))
+
+        assertEquals(
+            listOf(1L, 2L),
+            listOf(tonight, running, sunday, weekly).filter { isDuring(it, Period.Today, today) }.map { it.id },
+        )
+        // The weekly one is on Wednesdays from the 4th: the 11th is tomorrow.
+        assertEquals(
+            listOf(2L, 4L),
+            listOf(tonight, running, sunday, weekly).filter { isDuring(it, Period.Tomorrow, today) }.map { it.id },
+        )
+        assertEquals(
+            listOf(2L, 3L),
+            listOf(tonight, running, sunday, weekly).filter { isDuring(it, Period.Weekend, today) }.map { it.id },
+        )
+    }
 }
