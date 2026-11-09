@@ -70,6 +70,7 @@ enum class FormField {
     EndDate,
     RepeatUntil,
     Venue,
+
     // Not `Description`: that collides with `NSObject.description` in Swift.
     DescriptionText,
     Pricing,
