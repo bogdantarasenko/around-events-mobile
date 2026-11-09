@@ -82,13 +82,6 @@ private fun parse(value: String): LocalDate? = runCatching { LocalDate.parse(val
 private const val DAYS_IN_WEEK = 7
 
 /**
- * The next [count] events from [today] on, in the order the feed shows them: the "upcoming" shelf. What started
- * earlier and is still on (month-long exhibitions) would fill it every day, so it isn't counted.
- */
-fun upcomingEvents(events: List<Event>, today: String, count: Int): List<Event> =
-    feedDays(events, today).filterNot { it.isOngoing }.flatMap { it.events }.take(count)
-
-/**
  * Events whose title, place, organizer or description contain every word of [query], ignoring case. The search
  * runs on the loaded listing: it is a few hundred events at most.
  */

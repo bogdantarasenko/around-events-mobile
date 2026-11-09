@@ -28,19 +28,12 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.time.Clock
-import kotlin.time.Instant
 
 class DiscoverViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val settings = MapSettings()
     private val requested = mutableListOf<String>()
     private var online = true
-
-    // 2026-11-10 12:00 UTC; the events below are days away, so the device time zone doesn't move them.
-    private val clock = object : Clock {
-        override fun now() = Instant.fromEpochSeconds(1_794_312_000)
-    }
 
     @BeforeTest
     fun setUp() {
@@ -57,8 +50,9 @@ class DiscoverViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun listing(slug: String, title: String) =
-        """{"data":[{"id":1,"title":"$title","city":{"slug":"$slug","name":"$slug"},"start_date":"2026-11-20"}]}"""
+    private fun listing(slug: String, category: String) =
+        """{"data":[{"id":1,"title":"T","city":{"slug":"$slug","name":"$slug"},"start_date":"2026-11-20",""" +
+            """"category":"$category"}]}"""
 
     private fun viewModel(): DiscoverViewModel {
         // On the test dispatcher, so advanceUntilIdle() also waits for the responses.
@@ -70,8 +64,8 @@ class DiscoverViewModelTest {
                     val path = request.url.encodedPath
                     requested += path
                     val body = when {
-                        path.endsWith("/krakow/events") -> listing("krakow", "Kraków event")
-                        path.endsWith("/warsaw/events") -> listing("warsaw", "Warsaw event")
+                        path.endsWith("/krakow/events") -> listing("krakow", "music")
+                        path.endsWith("/warsaw/events") -> listing("warsaw", "sport")
                         path.endsWith("/organizers") -> ORGANIZERS
                         else -> CITIES
                     }
@@ -84,7 +78,6 @@ class DiscoverViewModelTest {
             CitiesRepository(api, SettingsRepository(settings), settings),
             FeedRepository(api, settings),
             OrganizersRepository(api, settings),
-            clock,
         )
     }
 
@@ -95,7 +88,7 @@ class DiscoverViewModelTest {
 
         with(viewModel.state.value) {
             assertEquals("krakow", city?.slug)
-            assertEquals("Kraków event", upcoming.single().title)
+            assertEquals("music", categories.single().key)
             assertEquals("Дом", organizers.single().name)
         }
     }
@@ -108,7 +101,7 @@ class DiscoverViewModelTest {
         viewModel.selectCity("warsaw")
         advanceUntilIdle()
 
-        assertEquals("Warsaw event", viewModel.state.value.upcoming.single().title)
+        assertEquals("sport", viewModel.state.value.categories.single().key)
         assertEquals("warsaw", settings.getStringOrNull("city"))
         assertEquals(
             listOf("/api/cities/krakow/events", "/api/cities/warsaw/events"),
@@ -126,7 +119,7 @@ class DiscoverViewModelTest {
         advanceUntilIdle()
 
         with(offline.state.value) {
-            assertEquals("Kraków event", upcoming.single().title)
+            assertEquals("music", categories.single().key)
             assertEquals(ErrorKind.Offline, error?.kind)
         }
     }

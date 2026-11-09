@@ -10,10 +10,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -24,8 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -44,7 +40,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,15 +49,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import events.around.android.Cities
 import events.around.android.CityPage
-import events.around.android.EventDetail
 import events.around.android.Events
 import events.around.android.OrganizerPage
 import events.around.android.Search
-import events.around.android.Settings
 import events.around.android.city.cityGradient
 import events.around.android.ui.components.Avatar
 import events.around.android.ui.components.ErrorBanner
-import events.around.android.ui.components.EventRow
 import events.around.android.ui.components.categoryIcon
 import events.around.android.ui.components.categoryTint
 import events.around.android.ui.format.categoryLabel
@@ -70,26 +62,23 @@ import events.around.android.ui.format.text
 import events.around.android.ui.strings.LocalAroundStrings
 import events.around.android.ui.theme.AroundColors
 import events.around.core.model.City
-import events.around.core.model.Event
 import events.around.core.model.Organizer
 import events.around.shared.domain.feed.CategoryCount
 import events.around.shared.presentation.feed.DiscoverUiState
 import events.around.shared.presentation.feed.DiscoverViewModel
 
-private const val SHELF_ROWS = 3
 private const val SHADE_START = 0.5f
-
-// The design's 333dp column on a 393dp screen: 20 margin, 20 gap, 20 of the next column.
-private const val SHELF_PEEK_DP = 60
 
 private val ShadeEnd = Color.Black.copy(alpha = 0.45f)
 
-/** Discover as in the designs: the city's upcoming events, categories, cities and organizers. */
+/**
+ * Discover: the way around the city — its categories, the other cities and the organizers. The listing itself
+ * lives on the Home tab, so nothing here repeats it.
+ */
 @Composable
 fun DiscoverScreen(
     viewModel: DiscoverViewModel,
     navigate: (NavKey) -> Unit,
-    onOpenMap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -100,13 +89,7 @@ fun DiscoverScreen(
         topBar = {
             LargeTopAppBar(
                 title = { Text(strings.tabDiscover) },
-                navigationIcon = {
-                    IconButton(onClick = { navigate(Settings) }) {
-                        Icon(Icons.Outlined.AccountCircle, contentDescription = strings.settingsTitle)
-                    }
-                },
                 actions = {
-                    IconButton(onClick = onOpenMap) { Icon(Icons.Outlined.Map, contentDescription = strings.mapTitle) }
                     IconButton(onClick = { navigate(Search) }) {
                         Icon(Icons.Outlined.Search, contentDescription = strings.searchPlaceholder)
                     }
@@ -140,7 +123,7 @@ private fun LazyListScope.discoverContent(
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator() }
         }
-        state.upcoming.isEmpty() && (state.isEmpty || state.error != null) -> item {
+        state.categories.isEmpty() && (state.isEmpty || state.error != null) -> item {
             Empty(state.error?.text(LocalAroundStrings.current), viewModel::refresh)
         }
         else -> {
@@ -154,15 +137,8 @@ private fun LazyListScope.discoverContent(
                     )
                 }
             }
-            item { UpcomingShelf(state, onOpenAll = { navigate(Events()) }, onOpen = { navigate(EventDetail(it)) }) }
             if (state.categories.isNotEmpty()) {
-                item {
-                    CategoryGrid(
-                        state.categories,
-                        onOpen = { navigate(Events(it)) },
-                        modifier = Modifier.padding(top = 21.dp),
-                    )
-                }
+                categoryTiles(state.categories) { navigate(Events(it)) }
             }
             if (state.cities.size > 1) {
                 item {
@@ -215,85 +191,64 @@ private fun SectionTitle(
     }
 }
 
-@Composable
-private fun UpcomingShelf(
-    state: DiscoverUiState,
-    onOpenAll: () -> Unit,
-    onOpen: (Long) -> Unit,
+private const val TILE_COLUMNS = 2
+
+/** The categories the city has, as tiles in two columns: the icon on its tint, the name and how many events. */
+private fun LazyListScope.categoryTiles(
+    categories: List<CategoryCount>,
+    onOpen: (String) -> Unit,
 ) {
-    val strings = LocalAroundStrings.current
-    val columnWidth = (LocalConfiguration.current.screenWidthDp - SHELF_PEEK_DP).dp
-    Column {
-        SectionTitle(state.city?.name ?: strings.tabFeed, strings.discoverUpcoming, onOpenAll)
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
+    item { SectionTitle(LocalAroundStrings.current.discoverCategories) }
+    items(categories.chunked(TILE_COLUMNS)) { row ->
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp),
         ) {
-            items(state.upcoming.chunked(SHELF_ROWS)) { column: List<Event> ->
-                Column(Modifier.width(columnWidth)) {
-                    column.forEachIndexed { index, event ->
-                        EventRow(
-                            event,
-                            onClick = { onOpen(event.id) },
-                            compact = true,
-                            showsSeparator = index < column.lastIndex,
-                        )
-                    }
-                }
-            }
+            row.forEach { item -> CategoryTile(item, onOpen, Modifier.weight(1f)) }
+            if (row.size < TILE_COLUMNS) Box(Modifier.weight(1f))
         }
     }
 }
 
-/** White chips with a hairline border, an icon and a 15sp label, in two rows that scroll sideways together. */
 @Composable
-private fun CategoryGrid(
-    categories: List<CategoryCount>,
+private fun CategoryTile(
+    item: CategoryCount,
     onOpen: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAroundStrings.current
-    val half = (categories.size + 1) / 2
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        SectionTitle(strings.discoverCategories)
-        LazyRow(contentPadding = PaddingValues(horizontal = 20.dp)) {
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(9.5.dp)) {
-                    listOf(categories.take(half), categories.drop(half)).forEach { row ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                            row.forEach { item -> CategoryChip(item, onOpen) }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CategoryChip(
-    item: CategoryCount,
-    onOpen: (String) -> Unit,
-) {
-    val strings = LocalAroundStrings.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.5.dp),
-        modifier = Modifier
-            .height(38.5.dp)
-            .clip(RoundedCornerShape(12.dp))
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
             .background(AroundColors.surface)
-            .border(1.dp, AroundColors.chipBorder, RoundedCornerShape(12.dp))
+            .border(1.dp, AroundColors.chipBorder, RoundedCornerShape(14.dp))
             .clickable { onOpen(item.key) }
-            .padding(start = 10.5.dp, end = 13.dp),
+            .padding(12.dp),
     ) {
-        Icon(
-            categoryIcon(item.key),
-            contentDescription = null,
-            tint = categoryTint(item.key),
-            modifier = Modifier.size(20.dp),
-        )
-        Text(categoryLabel(item.key, strings), fontSize = 15.sp, color = AroundColors.ink)
+        Box(
+            Modifier.size(40.dp).clip(CircleShape).background(categoryTint(item.key).copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                categoryIcon(item.key),
+                contentDescription = null,
+                tint = categoryTint(item.key),
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                categoryLabel(item.key, strings),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = AroundColors.ink,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(strings.eventsCount("${item.count}"), fontSize = 12.sp, color = AroundColors.secondary)
+        }
     }
 }
 

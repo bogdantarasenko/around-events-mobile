@@ -3,17 +3,14 @@ package events.around.shared.presentation.feed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import events.around.core.model.City
-import events.around.core.model.Event
 import events.around.core.model.Organizer
 import events.around.shared.data.city.CitiesRepository
 import events.around.shared.data.feed.FeedRepository
 import events.around.shared.data.organizers.OrganizersRepository
 import events.around.shared.domain.feed.CategoryCount
 import events.around.shared.domain.feed.categoryCounts
-import events.around.shared.domain.feed.upcomingEvents
 import events.around.shared.presentation.Refresher
 import events.around.shared.presentation.UiError
-import events.around.shared.presentation.today
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,17 +23,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 
 /**
- * The home screen: the city's next events, its categories, the other cities and the organizers. It also loads
- * the city's listing for every other screen, so it lives as long as the app.
+ * Discover: the city's categories, the other cities and the organizers. It also loads the city's listing for
+ * every other screen, so it lives as long as the app.
  */
 class DiscoverViewModel(
     private val cities: CitiesRepository,
     private val feed: FeedRepository,
     private val organizers: OrganizersRepository,
-    clock: Clock,
 ) : ViewModel() {
 
     private val refresher = Refresher(viewModelScope)
@@ -55,7 +50,6 @@ class DiscoverViewModel(
         DiscoverUiState(
             city = current,
             cities = allCities.orEmpty(),
-            upcoming = events?.let { upcomingEvents(it, clock.today(), UPCOMING_COUNT) }.orEmpty(),
             categories = events?.let(::categoryCounts).orEmpty(),
             organizers = cityOrganizers.orEmpty(),
             // Nothing cached to show meanwhile: the first start, or a city never opened on this device.
@@ -107,17 +101,11 @@ class DiscoverViewModel(
             extra.await()
         }
     }
-
-    private companion object {
-        const val UPCOMING_COUNT = 9
-    }
 }
 
 data class DiscoverUiState(
     val city: City? = null,
     val cities: List<City> = emptyList(),
-    /** The shelf of next events: columns of three on screen. */
-    val upcoming: List<Event> = emptyList(),
     val categories: List<CategoryCount> = emptyList(),
     val organizers: List<Organizer> = emptyList(),
     val isLoading: Boolean = false,

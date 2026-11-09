@@ -23,13 +23,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import events.around.android.ui.strings.LocalAroundStrings
 
-/**
- * The three tabs of the designs on the system navigation bar. [tabContent] draws the selected tab and gets a way
- * to switch tabs (Discover's map button opens the Map tab).
- */
+/** The three tabs of the designs on the system navigation bar; [tabContent] draws the selected one. */
 @Composable
 fun HomeScreen(
-    tabContent: @Composable (tab: HomeTab, selectTab: (HomeTab) -> Unit) -> Unit,
+    tabContent: @Composable (tab: HomeTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAroundStrings.current
@@ -55,6 +52,6 @@ fun HomeScreen(
         // The tabs draw their own top bars; only the bottom bar's space is taken here.
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) { tabContent(tab) { tab = it } }
+        Box(Modifier.fillMaxSize().padding(padding)) { tabContent(tab) }
     }
 }

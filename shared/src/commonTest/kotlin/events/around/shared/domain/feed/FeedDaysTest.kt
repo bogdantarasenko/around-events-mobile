@@ -84,18 +84,6 @@ class FeedDaysTest {
     }
 
     @Test
-    fun `the upcoming shelf skips what is already on and keeps feed order`() {
-        val events = listOf(
-            event(1, "2026-11-01", end = "2026-11-30"),
-            event(2, "2026-11-12"),
-            event(3, "2026-11-10", time = "18:00"),
-            event(4, "2026-11-15"),
-        )
-
-        assertEquals(listOf(3L, 2L), upcomingEvents(events, today = "2026-11-10", count = 2).map { it.id })
-    }
-
-    @Test
     fun `search needs every word, in any field, ignoring case`() {
         val events = listOf(
             event(1, "2026-11-12").copy(title = "Концерт Boombox", venue = "Progresja"),

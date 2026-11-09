@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
                 entry<Home> {
                     // Activity-scoped: Discover loads the city for every other screen, and each tab keeps its place.
                     val discover = koinViewModel<DiscoverViewModel>()
-                    HomeScreen(tabContent = { tab, selectTab ->
+                    HomeScreen(tabContent = { tab ->
                         when (tab) {
                             HomeTab.Home -> HomeFeedScreen(
                                 discover = discover,
@@ -90,11 +90,7 @@ class MainActivity : ComponentActivity() {
                                 ) { parametersOf(null, null) },
                                 navigate = { backStack.add(it) },
                             )
-                            HomeTab.Discover -> DiscoverScreen(
-                                viewModel = discover,
-                                navigate = { backStack.add(it) },
-                                onOpenMap = { selectTab(HomeTab.Map) },
-                            )
+                            HomeTab.Discover -> DiscoverScreen(viewModel = discover, navigate = { backStack.add(it) })
                             HomeTab.Map -> MapScreen(
                                 koinViewModel<MapViewModel>(),
                                 navigateBack = null,

@@ -15,9 +15,7 @@ struct HomeScreen: View {
             stack($homePath) { HomeFeedScreen(discover: discoverStore.instance, path: $homePath) }
                 .tabItem { Label(strings.tabHome, systemImage: "house.fill") }
                 .tag(AppTab.home)
-            stack($discoverPath) {
-                DiscoverScreen(viewModel: discoverStore.instance, path: $discoverPath) { tab = .map }
-            }
+            stack($discoverPath) { DiscoverScreen(viewModel: discoverStore.instance, path: $discoverPath) }
             .tabItem { Label(strings.tabDiscover, systemImage: "safari.fill") }
             .tag(AppTab.discover)
             stack($mapPath) { MapScreen(path: $mapPath) }
