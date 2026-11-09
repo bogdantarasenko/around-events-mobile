@@ -21,3 +21,15 @@ extension View {
         }
     }
 }
+
+extension ToolbarContent {
+    /// No glass capsule behind a toolbar item on iOS 26 and later: for the logo and city, which are content, not a button.
+    @ToolbarContentBuilder
+    func hidingSharedBackground() -> some ToolbarContent {
+        if #available(iOS 26.0, *) {
+            sharedBackgroundVisibility(.hidden)
+        } else {
+            self
+        }
+    }
+}

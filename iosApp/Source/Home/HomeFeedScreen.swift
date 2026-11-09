@@ -33,21 +33,14 @@ struct HomeFeedScreen: View {
             EventDays(days: state.days)
         }
         .listStyle(.plain)
+        // The city next to the logo, as the brand next to the avatar in the designs; the title stays for VoiceOver
+        // and the back menu, out of sight.
         .navigationTitle(cities.city?.name ?? strings.tabHome)
-        .toolbarTitleMenu {
-            if cities.cities.count > 1 {
-                Picker(strings.feedCity, selection: Binding(
-                    get: { cities.city?.slug ?? "" },
-                    set: { discover.selectCity(slug: $0) }
-                )) {
-                    ForEach(cities.cities, id: \.slug) { Text($0.name).tag($0.slug) }
-                }
-            }
-        }
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Image("Logo").resizable().scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
-            }
+            ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
+            ToolbarItem(placement: .topBarLeading) { brand(cities) }
+                .hidingSharedBackground()
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button { openURL(Site.submit) } label: { Image(systemName: "plus") }
                     .accessibilityLabel(strings.feedSubmit)
@@ -66,5 +59,31 @@ struct HomeFeedScreen: View {
                 self.cities = value
             }
         }
+    }
+
+    private func brand(_ cities: DiscoverUiState) -> some View {
+        Menu {
+            Picker(strings.feedCity, selection: Binding(
+                get: { cities.city?.slug ?? "" },
+                set: { discover.selectCity(slug: $0) }
+            )) {
+                ForEach(cities.cities, id: \.slug) { Text($0.name).tag($0.slug) }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image("Logo").resizable().scaledToFit().frame(width: 36, height: 36).accessibilityHidden(true)
+                Text(cities.city?.name ?? strings.tabHome)
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(Palette.ink)
+                if cities.cities.count > 1 {
+                    Image(systemName: "chevron.down")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Palette.secondary)
+                }
+            }
+        }
+        .disabled(cities.cities.count < 2)
+        .accessibilityLabel(strings.feedCity)
+        .accessibilityValue(cities.city?.name ?? "")
     }
 }

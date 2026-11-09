@@ -1,6 +1,8 @@
 package events.around.android.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,9 +20,9 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -65,19 +68,13 @@ fun HomeFeedScreen(
     val cities by discover.state.collectAsStateWithLifecycle()
     val strings = LocalAroundStrings.current
     val context = LocalContext.current
-    val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scroll = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scroll.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
+            // The city next to the logo, as the brand next to the avatar in the designs.
+            TopAppBar(
                 title = { CityTitle(cities.city, cities.cities, discover::selectCity) },
-                navigationIcon = {
-                    Image(
-                        painterResource(R.drawable.around_logo),
-                        contentDescription = null,
-                        modifier = Modifier.padding(start = 12.dp).size(32.dp),
-                    )
-                },
                 actions = {
                     IconButton(onClick = { context.openUrl(BuildConfig.BASE_URL) }) {
                         Icon(Icons.Outlined.Add, contentDescription = strings.feedSubmit)
@@ -131,13 +128,14 @@ private fun CityTitle(
     val strings = LocalAroundStrings.current
     var open by remember { mutableStateOf(false) }
     Box {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(city?.name ?: strings.tabHome)
-            if (cities.size > 1) {
-                IconButton(onClick = { open = true }) {
-                    Icon(Icons.Filled.ArrowDropDown, contentDescription = strings.feedCity)
-                }
-            }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.clickable(enabled = cities.size > 1, onClickLabel = strings.feedCity) { open = true },
+        ) {
+            Image(painterResource(R.drawable.around_logo), contentDescription = null, modifier = Modifier.size(36.dp))
+            Text(city?.name ?: strings.tabHome, fontWeight = FontWeight.Bold)
+            if (cities.size > 1) Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             cities.forEach { option ->
