@@ -13,7 +13,10 @@ struct EventRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 13) {
-            EventThumb(event: event)
+            // No poster, no square: an empty tile says nothing the category line doesn't.
+            if hasPoster {
+                EventThumb(event: event)
+            }
             VStack(alignment: .leading, spacing: 0) {
                 hostLine
                 Text(event.title)
@@ -38,11 +41,13 @@ struct EventRow: View {
         .padding(.bottom, 16)
         .overlay(alignment: .bottom) {
             if showsSeparator {
-                Rectangle().fill(Palette.separator).frame(height: 0.5).padding(.leading, 93)
+                Rectangle().fill(Palette.separator).frame(height: 0.5).padding(.leading, hasPoster ? 93 : 0)
             }
         }
         .contentShape(Rectangle())
     }
+
+    private var hasPoster: Bool { event.posterUrl != nil }
 
     private var hostLine: some View {
         HStack(spacing: 5) {

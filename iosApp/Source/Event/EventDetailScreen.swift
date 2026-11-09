@@ -34,10 +34,11 @@ struct EventDetailScreen: View {
     private func content(_ event: Event, nextDates: [String]) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                EventPosterCard(event: event)
+                if event.posterUrl != nil {
+                    EventPosterCard(event: event).padding(.bottom, 16)
+                }
                 Text(event.title)
                     .font(.title.weight(.bold))
-                    .padding(.top, 16)
                 Text(Dates.when(event, strings: strings, locale: locale))
                     .font(.callout)
                     .foregroundStyle(Color(white: 0.7))

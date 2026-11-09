@@ -102,12 +102,14 @@ fun EventDetailScreen(
                     .statusBarsPadding()
                     .padding(start = 20.dp, end = 20.dp, top = 60.dp, bottom = 32.dp),
             ) {
-                EventThumb(
-                    event,
-                    size = (LocalConfiguration.current.screenWidthDp - SCREEN_MARGINS_DP).dp,
-                    cornerRadius = 20.dp,
-                    modifier = Modifier.shadow(20.dp, RoundedCornerShape(20.dp)),
-                )
+                if (event.posterUrl != null) {
+                    EventThumb(
+                        event,
+                        size = (LocalConfiguration.current.screenWidthDp - SCREEN_MARGINS_DP).dp,
+                        cornerRadius = 20.dp,
+                        modifier = Modifier.shadow(20.dp, RoundedCornerShape(20.dp)),
+                    )
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
                         event.title,

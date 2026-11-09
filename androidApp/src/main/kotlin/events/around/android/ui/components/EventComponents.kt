@@ -203,7 +203,8 @@ fun EventRow(
     val locale = LocalAppLocale.current
     Column(modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(Modifier.padding(top = 14.dp, bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(13.dp)) {
-            EventThumb(event)
+            // No poster, no square: an empty tile says nothing the category line doesn't.
+            if (event.posterUrl != null) EventThumb(event)
             Column(Modifier.weight(1f)) {
                 HostLine(event)
                 Text(
@@ -223,7 +224,13 @@ fun EventRow(
             }
         }
         if (showsSeparator) {
-            Box(Modifier.padding(start = 93.dp).fillMaxWidth().height(0.5.dp).background(AroundColors.separator))
+            Box(
+                Modifier
+                    .padding(start = if (event.posterUrl != null) 93.dp else 0.dp)
+                    .fillMaxWidth()
+                    .height(0.5.dp)
+                    .background(AroundColors.separator),
+            )
         }
     }
 }
