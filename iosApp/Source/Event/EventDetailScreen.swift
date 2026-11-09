@@ -41,7 +41,7 @@ struct EventDetailScreen: View {
                     .font(.title.weight(.bold))
                 Text(Dates.when(event, strings: strings, locale: locale))
                     .font(.callout)
-                    .foregroundStyle(Color(white: 0.7))
+                    .foregroundStyle(.white.opacity(0.85))
                     .padding(.top, 8)
                 EventActions(event: event) { MapLink.open(event, openURL: openURL) }.padding(.top, 18)
                 EventFacts(event: event, nextDates: nextDates) { path.append(.organizer(slug: $0)) }

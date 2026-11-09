@@ -54,7 +54,7 @@ struct EventFacts: View {
                     VStack(alignment: .leading, spacing: 4) {
                         if let venue = event.venue { Text(venue).font(.body.weight(.medium)) }
                         if let address = event.address {
-                            Text(address).font(.callout).foregroundStyle(Color(white: 0.7))
+                            Text(address).font(.callout).foregroundStyle(.white.opacity(0.85))
                         }
                     }
                     if let place = MapPlace.group([event]).first {
@@ -94,8 +94,8 @@ struct EventFacts: View {
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.subheadline).foregroundStyle(Color(white: 0.69))
-            Rectangle().fill(Color.white.opacity(0.2)).frame(height: 0.8)
+            Text(title).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.82))
+            Rectangle().fill(Color.white.opacity(0.28)).frame(height: 0.8)
             content()
         }
     }
