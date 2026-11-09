@@ -47,7 +47,10 @@ class SubmissionFormViewModelTest {
         Dispatchers.setMain(dispatcher)
         settings.putString(
             "site_props",
-            apiJson.encodeToString(SiteProps.serializer(), SiteProps(listOf(City("krakow", "Kraków"), City("warsaw", "Warszawa")), 1)),
+            apiJson.encodeToString(
+                SiteProps.serializer(),
+                SiteProps(listOf(City("krakow", "Kraków"), City("warsaw", "Warszawa")), 1),
+            ),
         )
     }
 

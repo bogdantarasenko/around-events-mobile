@@ -25,6 +25,8 @@
     <string name="free">Бясплатна</string>
     <string name="price_from">ад %s zł</string>
     <string name="signed_as">Так падпісаныя заяўкі</string>
+    <string name="done">Гатова</string>
+    <string name="clear">Ачысціць</string>
     <string name="login_intro">Тут будуць вашы заяўкі: на праверцы, у афішы, адхіленыя. Убачыць іх можна пасля ўваходу праз Telegram.</string>
     <string name="login_unavailable">Уваход зараз недаступны. Праверце сувязь і паспрабуйце яшчэ раз.</string>
     <string name="login_expired">Уваход праз Telegram скончыўся. Увайдзіце зноў.</string>

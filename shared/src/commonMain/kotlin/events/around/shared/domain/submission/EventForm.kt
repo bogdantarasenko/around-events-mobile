@@ -77,20 +77,31 @@ enum class FormField {
 }
 
 /** The first problem that keeps the form from being sent, or null. Checked top to bottom, like the screen reads. */
-fun EventForm.firstProblem(posterBytes: Long?): FormField? {
-    if (title.trim().length < 2) return FormField.Title
-    if (category.isEmpty()) return FormField.Category
-    if (posterBytes != null && posterBytes > MAX_POSTER_BYTES) return FormField.Poster
-    if (startDate.isEmpty()) return FormField.StartDate
-    if (dayMode == DayMode.MultiDay && endDate.isNotEmpty() && endDate < startDate) return FormField.EndDate
+fun EventForm.firstProblem(posterBytes: Long?): FormField? = eventProblem(posterBytes) ?: entryProblem()
+
+// The same minimums the backend validates (`StoreSubmissionRequest`).
+private const val MIN_TITLE = 2
+private const val MIN_VENUE = 2
+private const val MIN_DESCRIPTION = 10
+
+private fun EventForm.eventProblem(posterBytes: Long?): FormField? = when {
+    title.trim().length < MIN_TITLE -> FormField.Title
+    category.isEmpty() -> FormField.Category
+    posterBytes != null && posterBytes > MAX_POSTER_BYTES -> FormField.Poster
+    startDate.isEmpty() -> FormField.StartDate
+    dayMode == DayMode.MultiDay && endDate.isNotEmpty() && endDate < startDate -> FormField.EndDate
     // The six-month limit is the server's to check: it answers with its own message on this field.
-    if (dayMode == DayMode.Repeats && (repeatUntil.isEmpty() || repeatUntil < startDate)) return FormField.RepeatUntil
-    if (venue.trim().length < 2) return FormField.Venue
-    if (description.trim().length < 10) return FormField.Description
-    if (pricing == null) return FormField.Pricing
-    if (pricing == Pricing.Paid && priceFrom.isBlank() && priceNote.isBlank()) return FormField.PriceFrom
-    if (!acceptedRules) return FormField.AcceptedRules
-    return null
+    dayMode == DayMode.Repeats && (repeatUntil.isEmpty() || repeatUntil < startDate) -> FormField.RepeatUntil
+    else -> null
+}
+
+private fun EventForm.entryProblem(): FormField? = when {
+    venue.trim().length < MIN_VENUE -> FormField.Venue
+    description.trim().length < MIN_DESCRIPTION -> FormField.Description
+    pricing == null -> FormField.Pricing
+    pricing == Pricing.Paid && priceFrom.isBlank() && priceNote.isBlank() -> FormField.PriceFrom
+    !acceptedRules -> FormField.AcceptedRules
+    else -> null
 }
 
 /**

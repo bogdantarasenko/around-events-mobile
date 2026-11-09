@@ -41,7 +41,13 @@ data class MyEvent(
     val status: EventStatus get() = EventStatus.fromApi(statusName)
 
     /** The last day the event runs: a multi-day event lives until its end date. */
-    val lastDay: String? get() = if (endDate != null && startDate != null && endDate >= startDate) endDate else startDate
+    val lastDay: String? get() = if (endDate != null && startDate != null &&
+        endDate >= startDate
+    ) {
+        endDate
+    } else {
+        startDate
+    }
 
     val telegramPost: PublishedPost? get() = posts.firstOrNull { it.target == PublishedPost.TELEGRAM }
     val threadsPost: PublishedPost? get() = posts.firstOrNull { it.target == PublishedPost.THREADS }

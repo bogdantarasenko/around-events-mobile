@@ -8,13 +8,17 @@ import events.around.core.model.AppLanguage
 import events.around.i18n.AroundStrings
 import events.around.i18n.EnAroundStrings
 import events.around.i18n.aroundStringsFor
+import java.util.Locale
 
 val LocalAroundStrings = staticCompositionLocalOf<AroundStrings> { EnAroundStrings }
 
-/** The chosen language, or the device's first locale when the choice is "System". */
+/** The interface language as a locale, for formatting dates in the same language as the strings. */
+val LocalAppLocale = staticCompositionLocalOf<Locale> { Locale.ENGLISH }
+
+/** The chosen language's tag, or the device's first locale when the choice is "System". */
 @Composable
 @ReadOnlyComposable
-fun stringsFor(language: AppLanguage): AroundStrings {
-    val tag = language.tag ?: LocalConfiguration.current.locales[0].toLanguageTag()
-    return aroundStringsFor(tag)
-}
+fun languageTagFor(language: AppLanguage): String =
+    language.tag ?: LocalConfiguration.current.locales[0].toLanguageTag()
+
+fun stringsFor(tag: String): AroundStrings = aroundStringsFor(tag)

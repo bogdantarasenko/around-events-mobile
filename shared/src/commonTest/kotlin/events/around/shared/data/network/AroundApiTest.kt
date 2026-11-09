@@ -73,7 +73,10 @@ class AroundApiTest {
             ApiError.Rejected("Too far", "repeat_until"),
             errorOf(422, """{"message":"The given data was invalid","errors":{"repeat_until":["Too far"]}}"""),
         )
-        assertEquals(ApiError.Rejected("Already in the listing", "start_date"), errorOf(422, """{"message":"Already in the listing","field":"start_date"}"""))
+        assertEquals(
+            ApiError.Rejected("Already in the listing", "start_date"),
+            errorOf(422, """{"message":"Already in the listing","field":"start_date"}"""),
+        )
         assertEquals(ApiError.Conflict("Already published"), errorOf(409, """{"message":"Already published"}"""))
         assertEquals(ApiError.Unauthorized, errorOf(401, "<html>"))
         assertEquals(ApiError.TooMany, errorOf(429, ""))

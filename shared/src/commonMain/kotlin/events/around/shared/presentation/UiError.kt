@@ -11,6 +11,7 @@ enum class ErrorKind {
     SignedOut,
     NotFound,
     TooMany,
+
     /** The server explained itself: show [UiError.message]. */
     Explained,
     Server,

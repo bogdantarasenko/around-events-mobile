@@ -26,6 +26,8 @@
     <string name="free">Free</string>
     <string name="price_from">from %s zł</string>
     <string name="signed_as">Submissions are signed as</string>
+    <string name="done">Done</string>
+    <string name="clear">Clear</string>
     <string name="login_intro">Your submissions will be here: in review, published, rejected. Sign in with Telegram to see them.</string>
     <string name="login_unavailable">Sign-in is unavailable right now. Check the connection and try again.</string>
     <string name="login_expired">The Telegram sign-in has expired. Sign in again.</string>

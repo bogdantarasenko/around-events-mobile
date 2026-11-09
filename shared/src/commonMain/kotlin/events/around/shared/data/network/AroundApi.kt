@@ -16,6 +16,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.CancellationException
@@ -99,10 +100,10 @@ internal fun errorOf(status: Int, body: String): ApiError {
     val payload = runCatching { apiJson.parseToJsonElement(body).jsonObject }.getOrNull()
     val message = (payload?.get("message") as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotBlank() }
     return when (status) {
-        401 -> ApiError.Unauthorized
-        404 -> ApiError.NotFound
-        409 -> ApiError.Conflict(message)
-        422 -> {
+        HttpStatusCode.Unauthorized.value -> ApiError.Unauthorized
+        HttpStatusCode.NotFound.value -> ApiError.NotFound
+        HttpStatusCode.Conflict.value -> ApiError.Conflict(message)
+        HttpStatusCode.UnprocessableEntity.value -> {
             // Field validation lists messages under `errors`; a rejection on the merits puts one `field` next to
             // `message`.
             val errors = payload?.get("errors") as? JsonObject
@@ -111,7 +112,7 @@ internal fun errorOf(status: Int, body: String): ApiError {
             val field = firstField ?: (payload?.get("field") as? JsonPrimitive)?.contentOrNull
             ApiError.Rejected(firstError ?: message, field)
         }
-        429 -> ApiError.TooMany
+        HttpStatusCode.TooManyRequests.value -> ApiError.TooMany
         else -> ApiError.Server(status)
     }
 }

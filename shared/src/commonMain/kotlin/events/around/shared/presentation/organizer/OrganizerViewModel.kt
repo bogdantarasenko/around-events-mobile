@@ -13,8 +13,8 @@ import events.around.shared.data.network.ApiException
 import events.around.shared.data.network.OrganizerInput
 import events.around.shared.data.organizer.OrganizerRepository
 import events.around.shared.presentation.UiError
-import events.around.shared.presentation.today
 import events.around.shared.presentation.toUiError
+import events.around.shared.presentation.today
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

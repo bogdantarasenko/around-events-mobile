@@ -25,6 +25,8 @@
     <string name="free">Бесплатно</string>
     <string name="price_from">от %s zł</string>
     <string name="signed_as">Так подписаны заявки</string>
+    <string name="done">Готово</string>
+    <string name="clear">Очистить</string>
     <string name="login_intro">Здесь будут ваши заявки: на проверке, в афише, отклонённые. Увидеть их можно после входа через Telegram.</string>
     <string name="login_unavailable">Вход сейчас недоступен. Проверьте связь и попробуйте ещё раз.</string>
     <string name="login_expired">Вход через Telegram истёк. Войдите снова.</string>

@@ -23,6 +23,8 @@ class DetektConventionPlugin : Plugin<Project> {
                 parallel.set(true)
                 // -Paround.detektDebug=true prints the compiler errors behind "compiler errors found during analysis".
                 debug.set(providers.gradleProperty("around.detektDebug").map(String::toBoolean).orElse(false))
+                // -Paround.detektFix=true lets the ktlint rules rewrite formatting in place.
+                autoCorrect.set(providers.gradleProperty("around.detektFix").map(String::toBoolean).orElse(false))
 
                 source.setFrom(
                     files(

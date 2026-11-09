@@ -46,7 +46,10 @@ class EventFormTest {
         assertEquals("1", complete.copy(category = "kids").toParts().toMap()["with_kids"])
         assertEquals(
             "Board games",
-            complete.copy(category = "other", categorySuggestion = " Board games ").toParts().toMap()["category_suggestion"],
+            complete.copy(
+                category = "other",
+                categorySuggestion = " Board games ",
+            ).toParts().toMap()["category_suggestion"],
         )
     }
 
@@ -70,7 +73,11 @@ class EventFormTest {
 
     @Test
     fun `unknown price clears tickets and paid needs a price or a note`() {
-        val unknown = complete.copy(pricing = Pricing.Unknown, ticketsUrl = "https://t", priceNote = "x").toParts().toMap()
+        val unknown = complete.copy(
+            pricing = Pricing.Unknown,
+            ticketsUrl = "https://t",
+            priceNote = "x",
+        ).toParts().toMap()
         assertEquals("", unknown["tickets_url"])
         assertEquals("", unknown["price_note"])
 

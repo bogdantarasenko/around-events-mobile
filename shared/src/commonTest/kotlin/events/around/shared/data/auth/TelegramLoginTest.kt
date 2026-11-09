@@ -17,8 +17,9 @@ import kotlin.time.Instant
 class TelegramLoginTest {
     private val site = "https://around.events"
 
-    private fun redirect(json: String): String =
-        "$site/#tgAuthResult=" + Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).encode(json.encodeToByteArray())
+    private val base64 = Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT)
+
+    private fun redirect(json: String): String = "$site/#tgAuthResult=" + base64.encode(json.encodeToByteArray())
 
     @Test
     fun `login page carries the bot, the site origin and the return address`() {
@@ -36,8 +37,8 @@ class TelegramLoginTest {
     fun `result keeps every field Telegram sent, in its order, as the signature`() {
         val login = TelegramLoginPage.parseResult(
             redirect(
-                """{"id":123456789,"first_name":"Ann Lee","username":"ann","photo_url":"https://t.me/i/userpic/320/a.jpg",""" +
-                    """"auth_date":1794200000,"hash":"abc123"}""",
+                """{"id":123456789,"first_name":"Ann Lee","username":"ann",""" +
+                    """"photo_url":"https://t.me/i/userpic/320/a.jpg","auth_date":1794200000,"hash":"abc123"}""",
             ),
         )!!
 

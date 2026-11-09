@@ -7,8 +7,8 @@ import events.around.shared.data.events.MyEventsRepository
 import events.around.shared.domain.events.EventGroup
 import events.around.shared.domain.events.groupEvents
 import events.around.shared.presentation.UiError
-import events.around.shared.presentation.today
 import events.around.shared.presentation.toUiError
+import events.around.shared.presentation.today
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +19,7 @@ import kotlin.time.Clock
 
 class MyEventsViewModel(
     private val repository: MyEventsRepository,
-    private val clock: Clock,
+    clock: Clock,
 ) : ViewModel() {
 
     private val refreshing = MutableStateFlow(false)

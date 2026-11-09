@@ -1,12 +1,12 @@
 package events.around.android.home
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
@@ -19,13 +19,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import events.around.android.ui.strings.LocalAroundStrings
 
+/** Two sections — my events and profile — and the "+" for a new submission. */
 @Composable
 fun HomeScreen(
+    onAddEvent: () -> Unit,
     onOpenSettings: () -> Unit,
+    eventsContent: @Composable (Modifier) -> Unit,
+    profileContent: @Composable (Modifier) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAroundStrings.current
@@ -44,13 +47,20 @@ fun HomeScreen(
                     )
                 },
                 actions = {
-                    if (tab == HomeTab.Profile) {
-                        IconButton(onClick = onOpenSettings) {
-                            Icon(Icons.Outlined.Settings, contentDescription = strings.settingsTitle)
-                        }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Outlined.Settings, contentDescription = strings.settingsTitle)
                     }
                 },
             )
+        },
+        floatingActionButton = {
+            if (tab == HomeTab.Events) {
+                ExtendedFloatingActionButton(
+                    onClick = onAddEvent,
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text(strings.mineAddEvent) },
+                )
+            }
         },
         bottomBar = {
             NavigationBar {
@@ -69,11 +79,9 @@ fun HomeScreen(
             }
         },
     ) { padding ->
-        Box(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(strings.placeholderEmpty)
+        when (tab) {
+            HomeTab.Events -> eventsContent(Modifier.padding(padding))
+            HomeTab.Profile -> profileContent(Modifier.padding(padding))
         }
     }
 }

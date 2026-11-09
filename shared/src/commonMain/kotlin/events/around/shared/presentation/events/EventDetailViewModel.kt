@@ -6,8 +6,8 @@ import events.around.core.model.MyEvent
 import events.around.shared.data.events.MyEventsRepository
 import events.around.shared.domain.events.nextDates
 import events.around.shared.presentation.UiError
-import events.around.shared.presentation.today
 import events.around.shared.presentation.toUiError
+import events.around.shared.presentation.today
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,7 @@ import kotlin.time.Clock
 class EventDetailViewModel(
     private val eventId: Long,
     private val repository: MyEventsRepository,
-    private val clock: Clock,
+    clock: Clock,
 ) : ViewModel() {
 
     private val cancelling = MutableStateFlow(false)

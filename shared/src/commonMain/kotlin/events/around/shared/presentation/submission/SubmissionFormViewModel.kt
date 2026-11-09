@@ -53,7 +53,8 @@ class SubmissionFormViewModel(
     private val events: MyEventsRepository,
     private val settings: SettingsRepository,
     site: SiteRepository,
-) : ViewModel() {
+) : ViewModel(),
+    SubmissionFormActions {
 
     private val source = mode.eventId?.let(events::find)
     private var poster: PosterUpload? = null
@@ -73,33 +74,33 @@ class SubmissionFormViewModel(
         }
     }
 
-    fun setCity(slug: String) = edit { copy(city = slug) }
-    fun setTitle(value: String) = edit { copy(title = value) }
-    fun setCategory(value: String) = edit { copy(category = value) }
-    fun setCategorySuggestion(value: String) = edit { copy(categorySuggestion = value) }
-    fun toggleLanguage(code: String) = edit {
+    override fun setCity(slug: String) = edit { copy(city = slug) }
+    override fun setTitle(value: String) = edit { copy(title = value) }
+    override fun setCategory(value: String) = edit { copy(category = value) }
+    override fun setCategorySuggestion(value: String) = edit { copy(categorySuggestion = value) }
+    override fun toggleLanguage(code: String) = edit {
         copy(languages = if (code in languages) languages - code else languages + code)
     }
-    fun setWithKids(value: Boolean) = edit { copy(withKids = value) }
-    fun setDayMode(value: DayMode) = edit { copy(dayMode = value) }
-    fun setStartDate(value: String) = edit { copy(startDate = value) }
-    fun setStartTime(value: String) = edit { copy(startTime = value) }
-    fun setEndTime(value: String) = edit { copy(endTime = value) }
-    fun setEndDate(value: String) = edit { copy(endDate = value) }
-    fun setRepeat(value: Repeat) = edit { copy(repeat = value) }
-    fun setRepeatUntil(value: String) = edit { copy(repeatUntil = value) }
-    fun setVenue(value: String) = edit { copy(venue = value) }
-    fun setAddress(value: String) = edit { copy(address = value) }
-    fun setPricing(value: Pricing) = edit { copy(pricing = value) }
-    fun setPriceFrom(value: String) = edit { copy(priceFrom = value) }
-    fun setPriceNote(value: String) = edit { copy(priceNote = value) }
-    fun setEventUrl(value: String) = edit { copy(eventUrl = value) }
-    fun setTicketsUrl(value: String) = edit { copy(ticketsUrl = value) }
-    fun setDescription(value: String) = edit { copy(description = value) }
-    fun setOrganization(value: String) = edit { copy(organization = value) }
-    fun setAcceptedRules(value: Boolean) = edit { copy(acceptedRules = value) }
+    override fun setWithKids(value: Boolean) = edit { copy(withKids = value) }
+    override fun setDayMode(value: DayMode) = edit { copy(dayMode = value) }
+    override fun setStartDate(value: String) = edit { copy(startDate = value) }
+    override fun setStartTime(value: String) = edit { copy(startTime = value) }
+    override fun setEndTime(value: String) = edit { copy(endTime = value) }
+    override fun setEndDate(value: String) = edit { copy(endDate = value) }
+    override fun setRepeat(value: Repeat) = edit { copy(repeat = value) }
+    override fun setRepeatUntil(value: String) = edit { copy(repeatUntil = value) }
+    override fun setVenue(value: String) = edit { copy(venue = value) }
+    override fun setAddress(value: String) = edit { copy(address = value) }
+    override fun setPricing(value: Pricing) = edit { copy(pricing = value) }
+    override fun setPriceFrom(value: String) = edit { copy(priceFrom = value) }
+    override fun setPriceNote(value: String) = edit { copy(priceNote = value) }
+    override fun setEventUrl(value: String) = edit { copy(eventUrl = value) }
+    override fun setTicketsUrl(value: String) = edit { copy(ticketsUrl = value) }
+    override fun setDescription(value: String) = edit { copy(description = value) }
+    override fun setOrganization(value: String) = edit { copy(organization = value) }
+    override fun setAcceptedRules(value: Boolean) = edit { copy(acceptedRules = value) }
 
-    fun pickPoster(bytes: ByteArray, fileName: String, mimeType: String) {
+    override fun pickPoster(bytes: ByteArray, fileName: String, mimeType: String) {
         poster = PosterUpload(bytes, fileName, mimeType)
         mutableState.update {
             it.copy(
@@ -110,19 +111,19 @@ class SubmissionFormViewModel(
     }
 
     /** Drops the picked file, or the inherited poster of a repeat or fix. An edit keeps its poster on the server. */
-    fun removePoster() {
+    override fun removePoster() {
         poster = null
         mutableState.update { it.copy(poster = PosterState()) }
     }
 
     /** Throws the restored draft away. */
-    fun startOver() {
+    override fun startOver() {
         submissions.clearDraft()
         poster = null
         mutableState.update { initialState(it.cities, ignoreDraft = true).copy(cities = it.cities) }
     }
 
-    fun submit() {
+    override fun submit() {
         val current = mutableState.value
         if (current.isSubmitting || current.result != null) return
 

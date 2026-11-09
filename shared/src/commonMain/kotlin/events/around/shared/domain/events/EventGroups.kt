@@ -26,6 +26,7 @@ data class EventGroup(
 fun groupEvents(events: List<MyEvent>, today: String, filter: EventStatus? = null): List<EventGroup> {
     val shown = if (filter == null) events else events.filter { it.status == filter }
     fun live(event: MyEvent) = event.status in LIVE
+
     // No date at all reads as upcoming: it hasn't happened as far as anyone knows.
     fun upcoming(event: MyEvent) = event.lastDay.let { it == null || it >= today }
 
@@ -35,7 +36,10 @@ fun groupEvents(events: List<MyEvent>, today: String, filter: EventStatus? = nul
             EventGroupKind.Soon,
             shown.filter { live(it) && upcoming(it) }.sortedBy { it.startDate.orEmpty() + it.startTime.orEmpty() },
         ),
-        EventGroup(EventGroupKind.Off, shown.filter { it.status == EventStatus.Rejected || it.status == EventStatus.Cancelled }),
+        EventGroup(
+            EventGroupKind.Off,
+            shown.filter { it.status == EventStatus.Rejected || it.status == EventStatus.Cancelled },
+        ),
         EventGroup(EventGroupKind.Past, shown.filter { live(it) && !upcoming(it) }),
     ).filter { it.events.isNotEmpty() }
 }
