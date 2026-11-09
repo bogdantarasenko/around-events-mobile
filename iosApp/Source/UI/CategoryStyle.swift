@@ -1,24 +1,24 @@
 import SwiftUI
 
-/// An emoji and a tint per category: the chips on the home screen and the stand-in when an event has no poster.
+/// An icon and a tint per category: the chips on the home screen and the stand-in when an event has no poster.
 enum CategoryStyle {
-    static func emoji(_ key: String?) -> String {
+    static func symbol(_ key: String?) -> String {
         switch key {
-        case "concert", "music": "🎵"
-        case "standup": "🎤"
-        case "theatre": "🎭"
-        case "party": "🪩"
-        case "festival": "🎪"
-        case "exhibition": "🖼️"
-        case "kids": "🧸"
-        case "market": "🛍️"
-        case "food": "🍽️"
-        case "cinema": "🎬"
-        case "lecture", "learning": "🎓"
-        case "sport": "⚽️"
-        case "games": "🎲"
-        case "creative": "🎨"
-        default: "✨"
+        case "concert", "music": "music.note"
+        case "standup": "music.mic"
+        case "theatre": "theatermasks"
+        case "party": "party.popper"
+        case "festival": "tent"
+        case "exhibition": "photo.artframe"
+        case "kids": "figure.and.child.holdinghands"
+        case "market": "bag"
+        case "food": "fork.knife"
+        case "cinema": "film"
+        case "lecture", "learning": "graduationcap"
+        case "sport": "figure.run"
+        case "games": "dice"
+        case "creative": "paintpalette"
+        default: "sparkles"
         }
     }
 

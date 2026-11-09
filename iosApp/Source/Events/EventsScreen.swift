@@ -59,8 +59,9 @@ struct EventsScreen: View {
     private func header(_ state: EventsUiState) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             if let category = state.category {
-                Text(CategoryStyle.emoji(category))
-                    .font(.system(size: 30))
+                Image(systemName: CategoryStyle.symbol(category))
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(CategoryStyle.tint(category))
                     .frame(width: 64, height: 64)
                     .background(CategoryStyle.tint(category).opacity(0.18), in: Circle())
             }

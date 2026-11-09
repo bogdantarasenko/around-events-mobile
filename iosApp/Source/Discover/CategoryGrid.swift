@@ -1,7 +1,7 @@
 import AroundKit
 import SwiftUI
 
-/// "Browse by category": emoji chips in two rows that scroll sideways together.
+/// "Browse by category": icon chips in two rows that scroll sideways together.
 struct CategoryGrid: View {
     let categories: [CategoryCount]
     let onOpen: (String) -> Void
@@ -27,7 +27,8 @@ struct CategoryGrid: View {
                     onOpen(item.key)
                 } label: {
                     HStack(spacing: 6) {
-                        Text(CategoryStyle.emoji(item.key))
+                        Image(systemName: CategoryStyle.symbol(item.key))
+                            .foregroundStyle(CategoryStyle.tint(item.key))
                         Text(Labels.category(item.key, strings)).foregroundStyle(.primary)
                     }
                     .font(.subheadline)
