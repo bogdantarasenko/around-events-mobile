@@ -1,27 +1,31 @@
 import AroundKit
 import SwiftUI
 
-/// "Organizers": the city's organizers with a public page, the busiest first.
+/// "Featured calendars" in the designs: a 60pt picture, the name in 17pt and two grey lines about them.
 struct OrganizerList: View {
     let organizers: [Organizer]
     let onOpen: (String) -> Void
     @Environment(\.strings) private var strings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 17) {
             SectionTitle(title: strings.discoverOrganizers)
-            VStack(spacing: 14) {
+            VStack(spacing: 21) {
                 ForEach(organizers, id: \.slug) { organizer in
                     Button {
                         onOpen(organizer.slug)
                     } label: {
-                        HStack(alignment: .top, spacing: 14) {
-                            Avatar(url: organizer.avatarUrl, name: organizer.name, size: 48, cornerRadius: 10)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(organizer.name).font(.body.weight(.medium)).foregroundStyle(.primary)
+                        HStack(alignment: .top, spacing: 12.5) {
+                            Avatar(url: organizer.avatarUrl, name: organizer.name, size: 60, cornerRadius: 10)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(organizer.name)
+                                    .font(.system(size: 17, weight: .medium))
+                                    .tracking(-0.43)
+                                    .foregroundStyle(Palette.ink)
                                 Text(organizer.bio ?? strings.eventsCount("\(organizer.upcomingCount)"))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .font(.system(size: 15))
+                                    .tracking(-0.23)
+                                    .foregroundStyle(Palette.secondary)
                                     .lineLimit(2)
                                     .multilineTextAlignment(.leading)
                             }
@@ -32,7 +36,7 @@ struct OrganizerList: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 20)
         }
     }
 }

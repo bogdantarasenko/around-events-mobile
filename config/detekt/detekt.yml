@@ -101,6 +101,7 @@ Compose:
     allowedCompositionLocals:
       - LocalAroundStrings
       - LocalAppLocale
+      - LocalDarkTheme
   UnnecessaryLaunchedEffect:
     # Focus must be requested after the node is attached, which a frame-deferred LaunchedEffect guarantees.
     allowedCallNames:

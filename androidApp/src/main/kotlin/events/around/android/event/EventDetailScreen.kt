@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,13 +37,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import events.around.android.ui.components.Avatar
@@ -61,9 +66,13 @@ import events.around.core.model.EVENT_LANGUAGES
 import events.around.core.model.Event
 import events.around.shared.presentation.feed.EventDetailViewModel
 
-private val Backdrop = Color(0xFF1F1F1F)
-private val Muted = Color.White.copy(alpha = 0.65f)
-private val Glass = Color.White.copy(alpha = 0.15f)
+private val Backdrop = Color(0xFF696969)
+private val Muted = Color(0xFFB3B3B3)
+private val Glass = Color.White.copy(alpha = 0.18f)
+private const val MAX_ACTIONS = 3
+private val DividerThickness = 0.8.dp
+private val SectionLabel = Color(0xFFAFAFAF)
+private const val SCREEN_MARGINS_DP = 40
 
 /** The event as in the designs: dark, over its own blurred poster, with the poster card, actions and details. */
 @Composable
@@ -91,9 +100,9 @@ fun EventDetailScreen(
             ) {
                 EventThumb(
                     event,
-                    size = 300.dp,
-                    cornerRadius = 18.dp,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    size = (LocalConfiguration.current.screenWidthDp - SCREEN_MARGINS_DP).dp,
+                    cornerRadius = 20.dp,
+                    modifier = Modifier.shadow(20.dp, RoundedCornerShape(20.dp)),
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
@@ -154,31 +163,41 @@ private fun GlassButton(
     }
 }
 
-/** Tickets (white, the main one), the channel post, and the link. */
+/**
+ * Three 55dp buttons under the title, as Register / Contact / More in the designs: the first white, the others
+ * translucent. Ours are tickets or the link, the channel post, the map and sharing — the first three there are.
+ */
 @Composable
 private fun Actions(event: Event) {
     val strings = LocalAroundStrings.current
     val context = LocalContext.current
-    val tickets = linkOf(event.ticketsUrl)
-    val post = linkOf(event.postUrl)
-    val link = linkOf(event.eventUrl)
-    val primary = tickets ?: post ?: link
+    val place = listOfNotNull(event.venue, event.address).joinToString(", ")
+    val shared = linkOf(event.postUrl ?: event.ticketsUrl ?: event.eventUrl)
+    val actions = buildList {
+        linkOf(
+            event.ticketsUrl,
+        )?.let { add(Triple(strings.detailTickets, Icons.Outlined.ConfirmationNumber) { context.openUrl(it) }) }
+            ?: linkOf(
+                event.eventUrl,
+            )?.let { add(Triple(strings.detailLink, Icons.Outlined.Link) { context.openUrl(it) }) }
+        linkOf(
+            event.postUrl,
+        )?.let { add(Triple(strings.openPost, Icons.AutoMirrored.Outlined.Send) { context.openUrl(it) }) }
+        if (place.isNotEmpty()) {
+            add(
+                Triple(strings.mapTitle, Icons.Outlined.Map) { context.openExternal(geoUri(event, place)) },
+            )
+        }
+        shared?.let {
+            add(
+                Triple(strings.share, Icons.Outlined.Share) { context.shareText("${event.title}\n$it", event.title) },
+            )
+        }
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        tickets?.let {
-            ActionButton(
-                strings.detailTickets,
-                Icons.Outlined.ConfirmationNumber,
-                it == primary,
-            ) { context.openUrl(it) }
-        }
-        post?.let {
-            ActionButton(
-                strings.openPost,
-                Icons.AutoMirrored.Outlined.Send,
-                it == primary,
-            ) { context.openUrl(it) }
-        }
-        link?.let { ActionButton(strings.detailLink, Icons.Outlined.Link, it == primary) { context.openUrl(it) } }
+        actions.take(
+            MAX_ACTIONS,
+        ).forEachIndexed { index, (title, icon, run) -> ActionButton(title, icon, index == 0, run) }
     }
 }
 
@@ -189,18 +208,19 @@ private fun androidx.compose.foundation.layout.RowScope.ActionButton(
     primary: Boolean,
     onClick: () -> Unit,
 ) {
-    val content = if (primary) Color.Black else Color.White
+    val content = if (primary) Color(0xFF141414) else Color(0xFFE9E9E9)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .weight(1f)
-            .clip(RoundedCornerShape(12.dp))
+            .height(55.dp)
+            .clip(RoundedCornerShape(16.dp))
             .background(if (primary) Color.White else Glass)
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
+            .clickable(onClick = onClick),
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(18.dp))
-        Text(title, color = content, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+        Text(title, color = content, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
 
@@ -276,12 +296,16 @@ private fun Location(event: Event) {
     Section(strings.detailLocation) {
         event.venue?.let { Text(it, color = Color.White, fontWeight = FontWeight.Medium) }
         event.address?.let { Text(it, color = Muted) }
-        // The maps app: at the point when the backend found one, by the text otherwise.
-        val point = event.latitude?.let { lat -> event.longitude?.let { lon -> "$lat,$lon" } } ?: "0,0"
-        TextButton(onClick = { context.openExternal("geo:$point?q=" + Uri.encode("$place, ${event.city.name}")) }) {
+        TextButton(onClick = { context.openExternal(geoUri(event, place)) }) {
             Text(strings.openMap)
         }
     }
+}
+
+// The maps app: at the point when the backend found one, by the text otherwise.
+private fun geoUri(event: Event, place: String): String {
+    val point = event.latitude?.let { lat -> event.longitude?.let { lon -> "$lat,$lon" } } ?: "0,0"
+    return "geo:$point?q=" + Uri.encode("$place, ${event.city.name}")
 }
 
 @Composable
@@ -290,8 +314,8 @@ private fun Section(
     content: @Composable () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, color = Muted, style = MaterialTheme.typography.bodyMedium)
-        HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
+        Text(title, color = SectionLabel, fontSize = 15.sp)
+        HorizontalDivider(thickness = DividerThickness, color = Color.White.copy(alpha = 0.2f))
         content()
     }
 }

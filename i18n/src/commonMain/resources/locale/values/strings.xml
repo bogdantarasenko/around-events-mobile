@@ -89,4 +89,7 @@
     <string name="organizer_empty">Nothing planned yet</string>
     <string name="close">Close</string>
     <string name="more">More</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_discover">Discover</string>
+    <string name="tab_map">Map</string>
 </resources>

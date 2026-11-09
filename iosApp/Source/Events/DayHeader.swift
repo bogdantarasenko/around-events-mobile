@@ -1,7 +1,7 @@
 import AroundKit
 import SwiftUI
 
-/// "8 November / Wednesday": the day in black, the weekday in grey.
+/// "19 July / Sunday": the date in ink, a light slash, the weekday in grey — 17pt semibold.
 struct DayHeader: View {
     let day: FeedDay
     @Environment(\.strings) private var strings
@@ -10,13 +10,13 @@ struct DayHeader: View {
     var body: some View {
         let (main, weekday) = Dates.headingParts(day, strings: strings, locale: locale)
         HStack(spacing: 6) {
-            Text(main).foregroundStyle(.primary)
+            Text(main).font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.ink)
             if let weekday {
-                Text("/").foregroundStyle(.tertiary)
-                Text(weekday).foregroundStyle(.secondary)
+                Text("/").font(.system(size: 17)).foregroundStyle(Palette.slash)
+                Text(weekday).font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.weekday)
             }
         }
-        .font(.body.weight(.medium))
+        .tracking(-0.43)
         .textCase(nil)
     }
 }

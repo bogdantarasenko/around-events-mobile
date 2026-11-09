@@ -1,15 +1,15 @@
 import SwiftUI
 
-/// The green price tag next to the organizer line.
+/// The green price tag: 12pt medium on a pale green, 5pt corners.
 struct PriceBadge: View {
     let text: String
 
     var body: some View {
         Text(text)
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(Color.green)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(Palette.price)
             .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 4))
+            .padding(.vertical, 1.5)
+            .background(Palette.priceBackground, in: RoundedRectangle(cornerRadius: 5))
     }
 }

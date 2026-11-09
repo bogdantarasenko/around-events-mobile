@@ -67,6 +67,12 @@ Every answer is cached in settings: `cities`, `feed_<slug>`, `organizers_<slug>`
 offline state in the simulator, open the app once online, then rebuild against an unreachable server
 (`xcodebuild … 'AROUND_BASE_URL=http://127.0.0.1:9' build`): the cached listing shows with the offline banner.
 
+## Opening a screen in the simulator
+
+Debug builds read two launch arguments, so screens can be checked without tapping:
+`xcrun simctl launch booted events.around.app.debug -AroundTab discover` (or `map`), and
+`-AroundRoute event:<id>`, `organizer:<slug>` or `events:<category>` to push a screen on the Home tab.
+
 ## Rules
 
 - Comments only where the code isn't self-explanatory.

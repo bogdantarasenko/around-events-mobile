@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -25,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import events.around.android.EventDetail
@@ -34,7 +34,7 @@ import events.around.android.ui.components.Avatar
 import events.around.android.ui.components.BackScaffold
 import events.around.android.ui.components.CategoryFilter
 import events.around.android.ui.components.ErrorBanner
-import events.around.android.ui.components.categoryEmoji
+import events.around.android.ui.components.categoryIcon
 import events.around.android.ui.components.categoryTint
 import events.around.android.ui.components.eventDays
 import events.around.android.ui.format.categoryLabel
@@ -128,7 +128,12 @@ private fun Header(state: EventsUiState) {
                 Modifier.size(64.dp).clip(CircleShape).background(categoryTint(category).copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(categoryEmoji(category), fontSize = 30.sp)
+                Icon(
+                    categoryIcon(category),
+                    contentDescription = null,
+                    tint = categoryTint(category),
+                    modifier = Modifier.size(28.dp),
+                )
             }
         }
         Text(

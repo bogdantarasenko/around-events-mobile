@@ -1,7 +1,7 @@
 package events.around.android.organizer
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,13 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +31,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -39,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import events.around.android.ui.components.Avatar
@@ -48,6 +50,7 @@ import events.around.android.ui.components.eventDays
 import events.around.android.ui.components.openUrl
 import events.around.android.ui.format.text
 import events.around.android.ui.strings.LocalAroundStrings
+import events.around.android.ui.theme.AroundColors
 import events.around.core.model.Organizer
 import events.around.shared.presentation.feed.OrganizerViewModel
 
@@ -122,7 +125,7 @@ private fun OrganizerHeader(organizer: Organizer) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(140.dp)
+                .height(223.dp)
                 .background(
                     Brush.linearGradient(
                         listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CoverPurple),
@@ -137,34 +140,38 @@ private fun OrganizerHeader(organizer: Organizer) {
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         ) {
-            Avatar(
-                organizer.avatarUrl,
-                organizer.name,
-                size = 84.dp,
-                cornerRadius = 14.dp,
-                modifier = Modifier
-                    .offset(y = (-36).dp)
-                    .border(4.dp, MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp)),
-            )
+            Box(
+                Modifier
+                    .offset(y = (-44).dp)
+                    .shadow(2.dp, RoundedCornerShape(14.dp))
+                    .background(AroundColors.surface, RoundedCornerShape(14.dp))
+                    .padding(3.5.dp),
+            ) {
+                Avatar(organizer.avatarUrl, organizer.name, size = 80.dp, cornerRadius = 10.dp)
+            }
             Box(Modifier.weight(1f))
             organizer.followUrl?.let { url ->
-                Button(
-                    onClick = { context.openUrl(url) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onSurface,
-                        contentColor = MaterialTheme.colorScheme.surface,
-                    ),
-                    modifier = Modifier.padding(top = 8.dp),
-                ) { Text(strings.follow) }
+                Text(
+                    strings.follow,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = AroundColors.surface,
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .clip(CircleShape)
+                        .background(AroundColors.ink)
+                        .clickable { context.openUrl(url) }
+                        .padding(horizontal = 11.dp, vertical = 7.dp),
+                )
             }
         }
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.offset(y = (-24).dp).padding(horizontal = 16.dp),
         ) {
-            Text(organizer.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(organizer.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = AroundColors.ink)
             organizer.bio?.takeIf { it.isNotBlank() }?.let {
-                Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(it, fontSize = 15.sp, color = AroundColors.secondary)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (organizer.pastCount > 0) Muted(strings.pastCount("${organizer.pastCount}"))

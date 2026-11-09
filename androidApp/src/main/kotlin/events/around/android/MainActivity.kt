@@ -17,6 +17,9 @@ import androidx.navigation3.ui.NavDisplay
 import events.around.android.discover.DiscoverScreen
 import events.around.android.event.EventDetailScreen
 import events.around.android.events.EventsScreen
+import events.around.android.home.HomeFeedScreen
+import events.around.android.home.HomeScreen
+import events.around.android.home.HomeTab
 import events.around.android.map.MapScreen
 import events.around.android.organizer.OrganizerScreen
 import events.around.android.search.SearchScreen
@@ -73,11 +76,27 @@ class MainActivity : ComponentActivity() {
             onBack = navigateBack,
             entryProvider = entryProvider {
                 entry<Home> {
-                    // Activity-scoped: it loads the city for every other screen and keeps its place.
-                    DiscoverScreen(
-                        viewModel = koinViewModel<DiscoverViewModel>(),
-                        navigate = { backStack.add(it) },
-                    )
+                    // Activity-scoped: Discover loads the city for every other screen, and each tab keeps its place.
+                    val discover = koinViewModel<DiscoverViewModel>()
+                    HomeScreen(tabContent = { tab, selectTab ->
+                        when (tab) {
+                            HomeTab.Home -> HomeFeedScreen(
+                                discover = discover,
+                                events = koinViewModel<EventsViewModel>(key = "events-home") { parametersOf(null) },
+                                navigate = { backStack.add(it) },
+                            )
+                            HomeTab.Discover -> DiscoverScreen(
+                                viewModel = discover,
+                                navigate = { backStack.add(it) },
+                                onOpenMap = { selectTab(HomeTab.Map) },
+                            )
+                            HomeTab.Map -> MapScreen(
+                                koinViewModel<MapViewModel>(),
+                                navigateBack = null,
+                                onOpenEvent = { backStack.add(EventDetail(it)) },
+                            )
+                        }
+                    })
                 }
                 entry<Events> { route ->
                     val viewModel = koinViewModel<EventsViewModel>(key = "events-${route.category}") {

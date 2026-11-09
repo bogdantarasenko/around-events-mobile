@@ -88,4 +88,7 @@
     <string name="organizer_empty">Пакуль нічога не запланавана</string>
     <string name="close">Закрыць</string>
     <string name="more">Яшчэ</string>
+    <string name="tab_home">Галоўная</string>
+    <string name="tab_discover">Агляд</string>
+    <string name="tab_map">Мапа</string>
 </resources>

@@ -1,7 +1,7 @@
 import AroundKit
 import SwiftUI
 
-/// "Music 12 · Sport 4 …": outlined chips with counts that filter a list by category.
+/// "Cake Decor 1 · Clay 1 · Club 10": outlined pills with counts, as on the organizer page in the designs.
 struct CategoryFilter: View {
     let categories: [CategoryCount]
     let selected: String?
@@ -16,22 +16,22 @@ struct CategoryFilter: View {
                     Button {
                         onSelect(isOn ? nil : item.key)
                     } label: {
-                        HStack(spacing: 4) {
-                            Text(Labels.category(item.key, strings)).foregroundStyle(isOn ? Color.white : Color.primary)
-                            Text("\(item.count)").foregroundStyle(isOn ? Color.white.opacity(0.7) : Color.secondary)
+                        HStack(spacing: 5) {
+                            Text(Labels.category(item.key, strings)).foregroundStyle(isOn ? Palette.surface : Palette.chipText)
+                            Text("\(item.count)").foregroundStyle(isOn ? Palette.surface.opacity(0.7) : Palette.chipCount)
                         }
-                        .font(.subheadline)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(isOn ? Color.primary : Color.clear, in: Capsule())
-                        .overlay(Capsule().stroke(Color(.separator), lineWidth: isOn ? 0 : 0.5))
+                        .font(.system(size: 14.5))
+                        .padding(.horizontal, 11)
+                        .frame(height: 33.5)
+                        .background(isOn ? Palette.ink : Palette.surface, in: Capsule())
+                        .overlay(Capsule().stroke(Palette.chipBorder, lineWidth: isOn ? 0 : 1))
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(isOn ? .isSelected : [])
                 }
             }
-            .padding(.horizontal)
-            .padding(.vertical, 4)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
         }
     }
 }

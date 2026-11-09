@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,10 +20,24 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.DirectionsRun
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Casino
+import androidx.compose.material.icons.outlined.Celebration
+import androidx.compose.material.icons.outlined.ChildCare
+import androidx.compose.material.icons.outlined.Festival
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.Movie
+import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material.icons.outlined.TheaterComedy
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -44,40 +59,42 @@ import events.around.android.ui.format.shortWhen
 import events.around.android.ui.format.timeText
 import events.around.android.ui.strings.LocalAppLocale
 import events.around.android.ui.strings.LocalAroundStrings
+import events.around.android.ui.theme.AroundColors
 import events.around.core.model.Event
 import events.around.shared.domain.feed.CategoryCount
 import events.around.shared.domain.feed.FeedDay
 
-private val PriceGreen = Color(0xFF1E8E3E)
+private const val THUMB_ICON_SCALE = 0.36f
+private const val AVATAR_LETTER_SCALE = 0.45f
 
-/** An emoji per category: the chips on the home screen and the stand-in when an event has no poster. */
-fun categoryEmoji(key: String?): String = when (key) {
-    "concert", "music" -> "🎵"
-    "standup" -> "🎤"
-    "theatre" -> "🎭"
-    "party" -> "🪩"
-    "festival" -> "🎪"
-    "exhibition" -> "🖼️"
-    "kids" -> "🧸"
-    "market" -> "🛍️"
-    "food" -> "🍽️"
-    "cinema" -> "🎬"
-    "lecture", "learning" -> "🎓"
-    "sport" -> "⚽"
-    "games" -> "🎲"
-    "creative" -> "🎨"
-    else -> "✨"
+/** An icon per category: the chips on Discover and the stand-in when an event has no poster. */
+fun categoryIcon(key: String?): ImageVector = when (key) {
+    "concert", "music" -> Icons.Outlined.MusicNote
+    "standup" -> Icons.Outlined.Mic
+    "theatre" -> Icons.Outlined.TheaterComedy
+    "party" -> Icons.Outlined.Celebration
+    "festival" -> Icons.Outlined.Festival
+    "exhibition" -> Icons.Outlined.Image
+    "kids" -> Icons.Outlined.ChildCare
+    "market" -> Icons.Outlined.ShoppingBag
+    "food" -> Icons.Outlined.Restaurant
+    "cinema" -> Icons.Outlined.Movie
+    "lecture", "learning" -> Icons.Outlined.School
+    "sport" -> Icons.AutoMirrored.Outlined.DirectionsRun
+    "games" -> Icons.Outlined.Casino
+    "creative" -> Icons.Outlined.Palette
+    else -> Icons.Outlined.AutoAwesome
 }
 
-private val Purple = Color(0xFF8E44AD)
-private val Red = Color(0xFFE53935)
-private val Pink = Color(0xFFD81B60)
-private val Orange = Color(0xFFF57C00)
-private val Yellow = Color(0xFFF9A825)
-private val Brown = Color(0xFF795548)
-private val Blue = Color(0xFF1E88E5)
-private val Green = Color(0xFF43A047)
-private val Teal = Color(0xFF00897B)
+private val Purple = Color(0xFFAF52DE)
+private val Red = Color(0xFFFF3B30)
+private val Pink = Color(0xFFFF2D55)
+private val Orange = Color(0xFFFF9500)
+private val Yellow = Color(0xFFFFCC00)
+private val Brown = Color(0xFFA2845E)
+private val Blue = Color(0xFF007AFF)
+private val Green = Color(0xFF34C759)
+private val Teal = Color(0xFF30B0C7)
 
 fun categoryTint(key: String?): Color = when (key) {
     "concert", "music", "standup" -> Purple
@@ -91,20 +108,25 @@ fun categoryTint(key: String?): Color = when (key) {
     else -> Teal
 }
 
-/** The event's poster, or its category's emoji on a soft tint when there is none. */
+/** The event's poster, or its category's icon on a soft tint when there is none. */
 @Composable
 fun EventThumb(
     event: Event,
     modifier: Modifier = Modifier,
-    size: Dp = 64.dp,
+    size: Dp = 80.dp,
     cornerRadius: Dp = 10.dp,
 ) {
-    val shape = RoundedCornerShape(cornerRadius)
+    val tint = categoryTint(event.category)
     Box(
-        modifier = modifier.size(size).clip(shape).background(categoryTint(event.category).copy(alpha = 0.18f)),
+        modifier = modifier.size(size).clip(RoundedCornerShape(cornerRadius)).background(tint.copy(alpha = 0.16f)),
         contentAlignment = Alignment.Center,
     ) {
-        Text(categoryEmoji(event.category), fontSize = (size.value * 0.4f).sp)
+        Icon(
+            categoryIcon(event.category),
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(size * THUMB_ICON_SCALE),
+        )
         event.posterUrl?.let {
             AsyncImage(
                 model = it,
@@ -127,14 +149,14 @@ fun Avatar(
 ) {
     val shape = cornerRadius?.let { RoundedCornerShape(it) } ?: CircleShape
     Box(
-        modifier = modifier.size(size).clip(shape).background(MaterialTheme.colorScheme.surfaceVariant),
+        modifier = modifier.size(size).clip(shape).background(AroundColors.tabSelected),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             name.take(1).uppercase(),
-            fontSize = (size.value * 0.45f).sp,
+            fontSize = (size.value * AVATAR_LETTER_SCALE).sp,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = AroundColors.secondary,
         )
         url?.let {
             AsyncImage(
@@ -147,6 +169,7 @@ fun Avatar(
     }
 }
 
+/** The green price tag: 12sp medium on a pale green, 5dp corners. */
 @Composable
 fun PriceBadge(
     text: String,
@@ -154,99 +177,116 @@ fun PriceBadge(
 ) {
     Text(
         text,
-        style = MaterialTheme.typography.labelSmall,
-        fontWeight = FontWeight.SemiBold,
-        color = PriceGreen,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Medium,
+        color = AroundColors.price,
         modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(PriceGreen.copy(alpha = 0.12f))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+            .clip(RoundedCornerShape(5.dp))
+            .background(AroundColors.priceBackground)
+            .padding(horizontal = 6.dp, vertical = 1.5.dp),
     )
 }
 
-/** A line of every event list in the designs: thumbnail, who runs it and the price, the title, when and where. */
+/**
+ * The event line of the designs: an 80dp thumbnail, the organizer in grey with the price tag, a 17sp title, then
+ * the time and the place with their icons. [compact] is the Discover shelf: the day in the time line, no place.
+ */
 @Composable
 fun EventRow(
     event: Event,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    showsDay: Boolean = false,
+    compact: Boolean = false,
+    showsSeparator: Boolean = true,
 ) {
     val strings = LocalAroundStrings.current
     val locale = LocalAppLocale.current
-    val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    Row(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        EventThumb(event)
-        Column(verticalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                val organizer = event.organizer
-                if (organizer != null) {
-                    Avatar(organizer.avatarUrl, organizer.name, size = 14.dp)
-                }
+    Column(modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        Row(Modifier.padding(top = 14.dp, bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(13.dp)) {
+            EventThumb(event)
+            Column(Modifier.weight(1f)) {
+                HostLine(event)
                 Text(
-                    organizer?.name ?: event.category?.let { categoryLabel(it, strings) }.orEmpty(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = muted,
-                    maxLines = 1,
+                    event.title,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = AroundColors.ink,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.padding(top = 7.dp),
                 )
-                event.priceText(strings)?.let { PriceBadge(it) }
+                Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    val time = if (compact) event.shortWhen(strings, locale) else event.timeText()
+                    time?.let { Meta(Icons.Outlined.Schedule, it) }
+                    if (!compact) event.venue?.let { Meta(Icons.Outlined.Place, it) }
+                }
             }
-            Text(
-                event.title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                val time = if (showsDay) event.shortWhen(strings, locale) else event.timeText()
-                time?.let { IconText(Icons.Outlined.Schedule, it) }
-                event.venue?.let { IconText(Icons.Outlined.Place, it, Modifier.weight(1f, fill = false)) }
-            }
+        }
+        if (showsSeparator) {
+            Box(Modifier.padding(start = 93.dp).fillMaxWidth().height(0.5.dp).background(AroundColors.separator))
         }
     }
 }
 
 @Composable
-private fun IconText(
-    icon: ImageVector,
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(13.dp),
-        )
-        Spacer(Modifier.width(3.dp))
+private fun HostLine(event: Event) {
+    val strings = LocalAroundStrings.current
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        val organizer = event.organizer
+        val category = event.category
+        if (organizer != null) {
+            Avatar(organizer.avatarUrl, organizer.name, size = 15.dp, cornerRadius = 4.5.dp)
+        } else if (category != null) {
+            Box(
+                Modifier.size(
+                    15.dp,
+                ).clip(RoundedCornerShape(4.5.dp)).background(categoryTint(category).copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    categoryIcon(category),
+                    contentDescription = null,
+                    tint = categoryTint(category),
+                    modifier = Modifier.size(11.dp),
+                )
+            }
+        }
         Text(
-            text,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            organizer?.name ?: category?.let { categoryLabel(it, strings) }.orEmpty(),
+            fontSize = 14.sp,
+            color = AroundColors.secondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
         )
+        event.priceText(strings)?.let { PriceBadge(it) }
     }
 }
 
-/** "8 November / Wednesday": the day in full colour, the weekday muted. */
+@Composable
+private fun Meta(
+    icon: ImageVector,
+    text: String,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = AroundColors.secondary, modifier = Modifier.size(15.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(text, fontSize = 15.sp, color = AroundColors.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** "19 July / Sunday": the date in ink, a light slash, the weekday in grey — 17sp semibold. */
 @Composable
 fun DayHeader(
     day: FeedDay,
     modifier: Modifier = Modifier,
 ) {
     val (main, weekday) = day.headingParts(LocalAroundStrings.current, LocalAppLocale.current)
-    Row(modifier = modifier.padding(top = 18.dp, bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(main, style = MaterialTheme.typography.titleMedium)
+    Row(modifier = modifier.padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(main, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AroundColors.ink)
         weekday?.let {
-            Text("/", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.outline)
-            Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("/", fontSize = 17.sp, color = AroundColors.slash)
+            Text(it, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AroundColors.weekday)
         }
     }
 }
@@ -257,12 +297,20 @@ fun LazyListScope.eventDays(
     onOpen: (Long) -> Unit,
 ) {
     days.forEach { day ->
-        item(key = "day-${day.date}") { DayHeader(day) }
-        items(day.events, key = { "${day.date}-${it.id}" }) { event -> EventRow(event, onClick = { onOpen(event.id) }) }
+        item(key = "day-${day.date}") { DayHeader(day, Modifier.padding(horizontal = 20.dp)) }
+        items(day.events.size, key = { "${day.date}-${day.events[it].id}" }) { index ->
+            val event = day.events[index]
+            EventRow(
+                event,
+                onClick = { onOpen(event.id) },
+                showsSeparator = index < day.events.lastIndex,
+                modifier = Modifier.padding(horizontal = 20.dp),
+            )
+        }
     }
 }
 
-/** "Music 12 · Sport 4 …": outlined chips with counts that filter a list by category. */
+/** "Cake Decor 1 · Clay 1 · Club 10": outlined pills with counts, as on the organizer page in the designs. */
 @Composable
 fun CategoryFilter(
     categories: List<CategoryCount>,
@@ -274,22 +322,31 @@ fun CategoryFilter(
     LazyRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
     ) {
         items(categories, key = { it.key }) { item ->
             val isOn = item.key == selected
-            val content = if (isOn) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface
             Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
+                    .height(33.5.dp)
                     .clip(CircleShape)
-                    .background(if (isOn) MaterialTheme.colorScheme.onSurface else Color.Transparent)
-                    .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                    .background(if (isOn) AroundColors.ink else AroundColors.surface)
+                    .border(1.dp, if (isOn) Color.Transparent else AroundColors.chipBorder, CircleShape)
                     .clickable { onSelect(if (isOn) null else item.key) }
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                    .padding(horizontal = 11.dp),
             ) {
-                Text(categoryLabel(item.key, strings), style = MaterialTheme.typography.bodyMedium, color = content)
-                Text("${item.count}", style = MaterialTheme.typography.bodyMedium, color = content.copy(alpha = 0.6f))
+                Text(
+                    categoryLabel(item.key, strings),
+                    fontSize = 14.5.sp,
+                    color = if (isOn) AroundColors.surface else AroundColors.chipText,
+                )
+                Text(
+                    "${item.count}",
+                    fontSize = 14.5.sp,
+                    color = if (isOn) AroundColors.surface.copy(alpha = 0.7f) else AroundColors.chipCount,
+                )
             }
         }
     }

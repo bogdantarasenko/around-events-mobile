@@ -88,4 +88,7 @@
     <string name="organizer_empty">Поки нічого не заплановано</string>
     <string name="close">Закрити</string>
     <string name="more">Ще</string>
+    <string name="tab_home">Головна</string>
+    <string name="tab_discover">Огляд</string>
+    <string name="tab_map">Мапа</string>
 </resources>

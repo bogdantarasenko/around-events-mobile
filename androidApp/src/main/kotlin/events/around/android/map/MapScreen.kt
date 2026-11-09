@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,7 +44,8 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
-private const val SHEET_FRACTION = 0.4f
+private const val SHEET_FRACTION = 0.38f
+private val SHEET_BOTTOM = 78.dp
 private const val BOUNDS_PADDING_PX = 120
 private const val SINGLE_PLACE_ZOOM = 15.0
 
@@ -52,7 +53,8 @@ private const val SINGLE_PLACE_ZOOM = 15.0
 @Composable
 fun MapScreen(
     viewModel: MapViewModel,
-    navigateBack: () -> Unit,
+    /** Null on the Map tab, which has nowhere to go back to. */
+    navigateBack: (() -> Unit)?,
     onOpenEvent: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -60,21 +62,27 @@ fun MapScreen(
     val strings = LocalAroundStrings.current
     Box(modifier.fillMaxSize()) {
         EventsMap(state.events, onSelect = viewModel::select, modifier = Modifier.fillMaxSize())
-        Surface(
-            shape = CircleShape,
-            tonalElevation = 3.dp,
-            shadowElevation = 3.dp,
-            modifier = Modifier.statusBarsPadding().padding(12.dp),
-        ) {
-            IconButton(onClick = navigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
+        if (navigateBack != null) {
+            Surface(
+                shape = CircleShape,
+                shadowElevation = 3.dp,
+                modifier = Modifier.statusBarsPadding().padding(start = 20.dp, top = 8.dp),
+            ) {
+                IconButton(onClick = navigateBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
+                }
             }
         }
+        // The floating card of the designs, kept above the tab bar.
         Sheet(
             state = state,
             onClose = viewModel::clearSelection,
             onOpenEvent = onOpenEvent,
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxHeight(SHEET_FRACTION),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(start = 9.dp, end = 9.dp, bottom = SHEET_BOTTOM)
+                .fillMaxHeight(SHEET_FRACTION),
         )
     }
 }
@@ -140,7 +148,7 @@ private fun Sheet(
 ) {
     val strings = LocalAroundStrings.current
     Surface(
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape = RoundedCornerShape(34.dp),
         shadowElevation = 8.dp,
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -167,8 +175,9 @@ private fun Sheet(
                 }
             }
             LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
-                items(state.sheet, key = { it.id }) { event ->
-                    EventRow(event, onClick = { onOpenEvent(event.id) }, showsDay = true)
+                items(state.sheet.size, key = { state.sheet[it].id }) { index ->
+                    val event = state.sheet[index]
+                    EventRow(event, onClick = { onOpenEvent(event.id) }, showsSeparator = index < state.sheet.lastIndex)
                 }
                 if (state.unlocated > 0 && !state.isSelection) {
                     item {

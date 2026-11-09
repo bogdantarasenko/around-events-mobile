@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -21,16 +22,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -42,28 +40,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
-import events.around.android.BuildConfig
 import events.around.android.EventDetail
 import events.around.android.Events
-import events.around.android.MapRoute
 import events.around.android.OrganizerPage
 import events.around.android.Search
 import events.around.android.Settings
+import events.around.android.home.HeaderAction
+import events.around.android.home.HeaderActions
 import events.around.android.ui.components.Avatar
 import events.around.android.ui.components.ErrorBanner
 import events.around.android.ui.components.EventRow
-import events.around.android.ui.components.categoryEmoji
-import events.around.android.ui.components.openUrl
+import events.around.android.ui.components.categoryIcon
+import events.around.android.ui.components.categoryTint
 import events.around.android.ui.format.categoryLabel
 import events.around.android.ui.format.text
 import events.around.android.ui.strings.LocalAroundStrings
+import events.around.android.ui.theme.AroundColors
 import events.around.core.model.City
 import events.around.core.model.Event
 import events.around.core.model.Organizer
@@ -72,19 +71,27 @@ import events.around.shared.presentation.feed.DiscoverUiState
 import events.around.shared.presentation.feed.DiscoverViewModel
 
 private const val SHELF_ROWS = 3
+private const val SHADE_START = 0.5f
+
+// The design's 333dp column on a 393dp screen: 20 margin, 20 gap, 20 of the next column.
+private const val SHELF_PEEK_DP = 60
+
+private val TAB_BAR_SPACE = 100.dp
+private val ShadeEnd = Color.Black.copy(alpha = 0.45f)
 
 private val CityGradients = listOf(
-    listOf(Color(0xFF3F51B5), Color(0xFF8E24AA)),
-    listOf(Color(0xFF00897B), Color(0xFF1E88E5)),
-    listOf(Color(0xFFF57C00), Color(0xFFD81B60)),
-    listOf(Color(0xFF43A047), Color(0xFF00897B)),
+    listOf(Color(0xFF5856D6), Color(0xFFAF52DE)),
+    listOf(Color(0xFF30B0C7), Color(0xFF007AFF)),
+    listOf(Color(0xFFFF9500), Color(0xFFFF2D55)),
+    listOf(Color(0xFF34C759), Color(0xFF30B0C7)),
 )
 
-/** The home screen: the city's next events, categories, cities and organizers. */
+/** Discover as in the designs: the city's upcoming events, categories, cities and organizers. */
 @Composable
 fun DiscoverScreen(
     viewModel: DiscoverViewModel,
     navigate: (NavKey) -> Unit,
+    onOpenMap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -94,17 +101,14 @@ fun DiscoverScreen(
         onRefresh = viewModel::refresh,
         modifier = modifier.fillMaxSize().statusBarsPadding(),
     ) {
-        LazyColumn(
-            contentPadding = PaddingValues(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            item { Header(navigate) }
+        LazyColumn(contentPadding = PaddingValues(bottom = TAB_BAR_SPACE), modifier = Modifier.fillMaxSize()) {
+            item { Header(navigate, onOpenMap) }
             when {
                 state.isLoading -> item {
-                    Box(Modifier.fillMaxWidth().padding(64.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                    Box(
+                        Modifier.fillMaxWidth().padding(64.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { CircularProgressIndicator() }
                 }
                 state.upcoming.isEmpty() && (state.isEmpty || state.error != null) -> item {
                     Empty(state.error?.text(strings) ?: strings.feedEmptyText, viewModel::refresh)
@@ -116,7 +120,7 @@ fun DiscoverScreen(
                                 error.text(strings),
                                 actionLabel = strings.retry,
                                 onAction = viewModel::refresh,
-                                modifier = Modifier.padding(horizontal = 16.dp),
+                                modifier = Modifier.padding(horizontal = 20.dp),
                             )
                         }
                     }
@@ -128,177 +132,30 @@ fun DiscoverScreen(
                         )
                     }
                     if (state.categories.isNotEmpty()) {
-                        item { CategoryGrid(state.categories) { navigate(Events(it)) } }
-                    }
-                    if (state.cities.size > 1) {
-                        item { CityCarousel(state.cities, state.city?.slug, viewModel::selectCity) }
-                    }
-                    if (state.organizers.isNotEmpty()) {
-                        item { OrganizerList(state.organizers) { navigate(OrganizerPage(it)) } }
-                    }
-                    item { SubmitCard() }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Header(navigate: (NavKey) -> Unit) {
-    val strings = LocalAroundStrings.current
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = { navigate(Settings) }) {
-            Icon(Icons.Outlined.Settings, contentDescription = strings.settingsTitle)
-        }
-        Text(strings.tabFeed, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Box(Modifier.weight(1f))
-        Row(Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)) {
-            IconButton(onClick = { navigate(MapRoute) }) {
-                Icon(Icons.Outlined.Map, contentDescription = strings.mapTitle)
-            }
-            IconButton(onClick = { navigate(Search) }) {
-                Icon(Icons.Outlined.Search, contentDescription = strings.searchPlaceholder)
-            }
-        }
-    }
-}
-
-@Composable
-private fun SectionTitle(
-    title: String,
-    subtitle: String? = null,
-    onClick: (() -> Unit)? = null,
-) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 16.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            if (onClick != null) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.outline,
-                )
-            }
-        }
-        subtitle?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.outline,
-            )
-        }
-    }
-}
-
-/** The next events in columns of three, swiped sideways. */
-@Composable
-private fun UpcomingShelf(
-    state: DiscoverUiState,
-    onOpenAll: () -> Unit,
-    onOpen: (Long) -> Unit,
-) {
-    val strings = LocalAroundStrings.current
-    val columnWidth = (LocalConfiguration.current.screenWidthDp - 56).dp
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SectionTitle(state.city?.name ?: strings.tabFeed, strings.discoverUpcoming, onOpenAll)
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            items(state.upcoming.chunked(SHELF_ROWS)) { column: List<Event> ->
-                Column(Modifier.width(columnWidth)) {
-                    column.forEachIndexed { index, event ->
-                        EventRow(event, onClick = { onOpen(event.id) }, showsDay = true)
-                        if (index < column.lastIndex) HorizontalDivider(Modifier.padding(start = 78.dp))
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** Emoji chips in two rows that scroll sideways together. */
-@Composable
-private fun CategoryGrid(
-    categories: List<CategoryCount>,
-    onOpen: (String) -> Unit,
-) {
-    val strings = LocalAroundStrings.current
-    val rows = categories.withIndex().partition { it.index % 2 == 0 }.toList().map { part -> part.map { it.value } }
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionTitle(strings.discoverCategories)
-        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    rows.forEach { row ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            row.forEach { item ->
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .border(
-                                            0.5.dp,
-                                            MaterialTheme.colorScheme.outlineVariant,
-                                            RoundedCornerShape(10.dp),
-                                        )
-                                        .clickable { onOpen(item.key) }
-                                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                                ) {
-                                    Text(categoryEmoji(item.key))
-                                    Text(categoryLabel(item.key, strings), style = MaterialTheme.typography.bodyMedium)
-                                }
-                            }
+                        item {
+                            CategoryGrid(
+                                state.categories,
+                                onOpen = { navigate(Events(it)) },
+                                modifier = Modifier.padding(top = 21.dp),
+                            )
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-/** Square cards to switch the city; a gradient per city, as the backend has no city photos. */
-@Composable
-private fun CityCarousel(
-    cities: List<City>,
-    current: String?,
-    onSelect: (String) -> Unit,
-) {
-    val strings = LocalAroundStrings.current
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionTitle(strings.discoverCities)
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            items(cities.size) { index ->
-                val city = cities[index]
-                Box(
-                    Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Brush.linearGradient(CityGradients[index % CityGradients.size]))
-                        .clickable { onSelect(city.slug) }
-                        .padding(12.dp),
-                ) {
-                    if (city.slug == current) {
-                        Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color.White)
+                    if (state.cities.size > 1) {
+                        item {
+                            CityCarousel(
+                                state.cities,
+                                state.city?.slug,
+                                viewModel::selectCity,
+                                Modifier.padding(top = 33.dp),
+                            )
+                        }
                     }
-                    Column(Modifier.align(Alignment.BottomStart)) {
-                        Text(city.name, color = Color.White, style = MaterialTheme.typography.titleMedium)
-                        if (city.upcomingCount > 0) {
-                            Text(
-                                strings.eventsCount("${city.upcomingCount}"),
-                                color = Color.White,
-                                style = MaterialTheme.typography.bodySmall,
+                    if (state.organizers.isNotEmpty()) {
+                        item {
+                            OrganizerList(
+                                state.organizers,
+                                onOpen = { navigate(OrganizerPage(it)) },
+                                modifier = Modifier.padding(top = 32.dp),
                             )
                         }
                     }
@@ -309,31 +166,195 @@ private fun CityCarousel(
 }
 
 @Composable
-private fun OrganizerList(
-    organizers: List<Organizer>,
+private fun Header(
+    navigate: (NavKey) -> Unit,
+    onOpenMap: () -> Unit,
+) {
+    val strings = LocalAroundStrings.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(9.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 12.dp),
+    ) {
+        Box(
+            Modifier.size(
+                44.dp,
+            ).clip(CircleShape).background(AroundColors.tabSelected).clickable { navigate(Settings) },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Filled.Person, contentDescription = strings.settingsTitle, tint = AroundColors.secondary)
+        }
+        Text(
+            strings.tabDiscover,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = AroundColors.ink,
+            modifier = Modifier.weight(1f),
+        )
+        HeaderActions(
+            HeaderAction(Icons.Outlined.Map, strings.mapTitle, onOpenMap),
+            HeaderAction(Icons.Outlined.Search, strings.searchPlaceholder) { navigate(Search) },
+        )
+    }
+}
+
+/** "Los Angeles ›" over "Upcoming Events": 20sp semibold, the subtitle in light grey, a small grey chevron. */
+@Composable
+private fun SectionTitle(
+    title: String,
+    subtitle: String? = null,
+    onClick: (() -> Unit)? = null,
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 20.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = AroundColors.ink)
+            if (onClick != null) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = AroundColors.chevron,
+                )
+            }
+        }
+        subtitle?.let { Text(it, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = AroundColors.tertiary) }
+    }
+}
+
+@Composable
+private fun UpcomingShelf(
+    state: DiscoverUiState,
+    onOpenAll: () -> Unit,
+    onOpen: (Long) -> Unit,
+) {
+    val strings = LocalAroundStrings.current
+    val columnWidth = (LocalConfiguration.current.screenWidthDp - SHELF_PEEK_DP).dp
+    Column {
+        SectionTitle(state.city?.name ?: strings.tabFeed, strings.discoverUpcoming, onOpenAll)
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            items(state.upcoming.chunked(SHELF_ROWS)) { column: List<Event> ->
+                Column(Modifier.width(columnWidth)) {
+                    column.forEachIndexed { index, event ->
+                        EventRow(
+                            event,
+                            onClick = { onOpen(event.id) },
+                            compact = true,
+                            showsSeparator = index < column.lastIndex,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** White chips with a hairline border, an icon and a 15sp label, in two rows that scroll sideways together. */
+@Composable
+private fun CategoryGrid(
+    categories: List<CategoryCount>,
+    onOpen: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val strings = LocalAroundStrings.current
+    val half = (categories.size + 1) / 2
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        SectionTitle(strings.discoverCategories)
+        LazyRow(contentPadding = PaddingValues(horizontal = 20.dp)) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(9.5.dp)) {
+                    listOf(categories.take(half), categories.drop(half)).forEach { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                            row.forEach { item -> CategoryChip(item, onOpen) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryChip(
+    item: CategoryCount,
     onOpen: (String) -> Unit,
 ) {
     val strings = LocalAroundStrings.current
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionTitle(strings.discoverOrganizers)
-        organizers.forEach { organizer ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                modifier = Modifier.fillMaxWidth().clickable {
-                    onOpen(
-                        organizer.slug,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.5.dp),
+        modifier = Modifier
+            .height(38.5.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(AroundColors.surface)
+            .border(1.dp, AroundColors.chipBorder, RoundedCornerShape(12.dp))
+            .clickable { onOpen(item.key) }
+            .padding(start = 10.5.dp, end = 13.dp),
+    ) {
+        Icon(
+            categoryIcon(item.key),
+            contentDescription = null,
+            tint = categoryTint(item.key),
+            modifier = Modifier.size(20.dp),
+        )
+        Text(categoryLabel(item.key, strings), fontSize = 15.sp, color = AroundColors.ink)
+    }
+}
+
+/** 174dp square cards with a shade, an icon in a translucent circle and the name; gradients stand in for photos. */
+@Composable
+private fun CityCarousel(
+    cities: List<City>,
+    current: String?,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val strings = LocalAroundStrings.current
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        SectionTitle(strings.discoverCities)
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            items(cities.size) { index ->
+                val city = cities[index]
+                Box(
+                    Modifier
+                        .size(174.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Brush.linearGradient(CityGradients[index % CityGradients.size]))
+                        .clickable { onSelect(city.slug) },
+                ) {
+                    Box(
+                        Modifier.fillMaxSize().background(
+                            Brush.verticalGradient(SHADE_START to Color.Transparent, 1f to ShadeEnd),
+                        ),
                     )
-                }.padding(horizontal = 16.dp, vertical = 4.dp),
-            ) {
-                Avatar(organizer.avatarUrl, organizer.name, size = 48.dp, cornerRadius = 10.dp)
-                Column(Modifier.weight(1f)) {
-                    Text(organizer.name, style = MaterialTheme.typography.titleMedium)
+                    Box(
+                        Modifier.padding(
+                            start = 12.dp,
+                            top = 11.dp,
+                        ).size(40.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            if (city.slug == current) Icons.Filled.Check else Icons.Outlined.AccountBalance,
+                            contentDescription = null,
+                            tint = Color.White,
+                        )
+                    }
                     Text(
-                        organizer.bio ?: strings.eventsCount("${organizer.upcomingCount}"),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+                        city.name,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                        modifier = Modifier.align(Alignment.BottomStart).padding(12.dp),
                     )
                 }
             }
@@ -341,35 +362,37 @@ private fun OrganizerList(
     }
 }
 
-/** The way to the mini-app for organizers: submitting happens there, not in the app. */
+/** "Featured calendars": a 60dp picture, the name in 17sp and two grey lines about them. */
 @Composable
-private fun SubmitCard() {
+private fun OrganizerList(
+    organizers: List<Organizer>,
+    onOpen: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val strings = LocalAroundStrings.current
-    val context = LocalContext.current
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable { context.openUrl(BuildConfig.BASE_URL) }
-            .padding(14.dp),
-    ) {
-        Box(
-            Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-        }
-        Column {
-            Text(strings.feedSubmit, style = MaterialTheme.typography.titleMedium)
-            Text(
-                strings.feedSubmitHint,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(17.dp)) {
+        SectionTitle(strings.discoverOrganizers)
+        organizers.forEach { organizer ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.5.dp),
+                modifier = Modifier.fillMaxWidth().clickable {
+                    onOpen(
+                        organizer.slug,
+                    )
+                }.padding(horizontal = 20.dp, vertical = 2.dp),
+            ) {
+                Avatar(organizer.avatarUrl, organizer.name, size = 60.dp, cornerRadius = 10.dp)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(organizer.name, fontSize = 17.sp, fontWeight = FontWeight.Medium, color = AroundColors.ink)
+                    Text(
+                        organizer.bio ?: strings.eventsCount("${organizer.upcomingCount}"),
+                        fontSize = 15.sp,
+                        color = AroundColors.secondary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
     }
 }
@@ -385,8 +408,8 @@ private fun Empty(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth().padding(vertical = 96.dp, horizontal = 24.dp),
     ) {
-        Text(strings.feedEmptyTitle, style = MaterialTheme.typography.titleLarge)
-        Text(message, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(strings.feedEmptyTitle, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = AroundColors.ink)
+        Text(message, textAlign = TextAlign.Center, color = AroundColors.secondary)
         TextButton(onClick = onRetry) { Text(strings.retry) }
     }
 }

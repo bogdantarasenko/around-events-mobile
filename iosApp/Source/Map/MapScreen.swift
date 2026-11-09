@@ -2,14 +2,14 @@ import AroundKit
 import MapKit
 import SwiftUI
 
-/// The city's events on a map: posters as pins, the list in a sheet below.
+/// The map tab: posters as pins, a locate button, and the floating card with the events below.
 struct MapScreen: View {
     @Binding var path: [AppRoute]
     @Environment(\.strings) private var strings
     @StateObject private var store = VMStoreOwner<MapViewModel>(Deps.shared.getMapViewModel())
     @State private var state: MapUiState?
     @State private var camera: MapCameraPosition = .automatic
-    @State private var showsSheet = true
+    @State private var expanded = false
 
     var body: some View {
         let state = state ?? store.instance.state.value
@@ -21,32 +21,28 @@ struct MapScreen: View {
                 }
             }
         }
-        .mapControls { MapCompass() }
+        .mapControls {}
         .overlay(alignment: .topLeading) {
-            CircleButton(systemImage: "chevron.left", label: strings.back) {
-                if !path.isEmpty { path.removeLast() }
+            if !path.isEmpty {
+                GlassCircle(systemImage: "chevron.left", label: strings.back) { path.removeLast() }
+                    .padding(.leading, 20)
+                    .padding(.top, 8)
             }
-            .padding()
         }
-        .overlay(alignment: .topTrailing) {
-            CircleButton(systemImage: "location.viewfinder", label: strings.mapTitle) {
-                store.instance.clearSelection()
-                withAnimation { camera = .automatic }
+        .overlay(alignment: .bottom) {
+            VStack(alignment: .trailing, spacing: 12) {
+                GlassCircle(systemImage: "location.north.line", label: strings.mapTitle) {
+                    store.instance.clearSelection()
+                    withAnimation { camera = .automatic }
+                }
+                .padding(.trailing, 22)
+                MapSheet(state: state, expanded: $expanded, onClose: { store.instance.clearSelection() }) { id in
+                    path.append(.eventDetail(id))
+                }
             }
-            .padding()
+            .padding(.bottom, 78)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $showsSheet) {
-            MapSheet(state: state, onClose: { store.instance.clearSelection() }) { id in
-                showsSheet = false
-                path.append(.eventDetail(id))
-            }
-            .presentationDetents([.fraction(0.35), .large])
-            .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.35)))
-            .interactiveDismissDisabled()
-        }
-        .onAppear { showsSheet = true }
-        .onDisappear { showsSheet = false }
         .task {
             for await value in store.instance.state {
                 self.state = value

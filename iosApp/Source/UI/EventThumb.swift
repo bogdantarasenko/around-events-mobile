@@ -4,7 +4,7 @@ import SwiftUI
 /// The event's poster, or its category's icon on a soft tint when there is none.
 struct EventThumb: View {
     let event: Event
-    var size: CGFloat = 64
+    var size: CGFloat = 80
     var cornerRadius: CGFloat = 10
 
     var body: some View {
@@ -24,10 +24,10 @@ struct EventThumb: View {
     }
 
     private var placeholder: some View {
-        CategoryStyle.tint(event.category).opacity(0.18)
+        CategoryStyle.tint(event.category).opacity(0.16)
             .overlay(
                 Image(systemName: CategoryStyle.symbol(event.category))
-                    .font(.system(size: size * 0.36, weight: .medium))
+                    .font(.system(size: min(size * 0.36, 64), weight: .medium))
                     .foregroundStyle(CategoryStyle.tint(event.category))
             )
     }

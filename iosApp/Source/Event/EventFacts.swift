@@ -52,20 +52,22 @@ struct EventFacts: View {
         if event.venue != nil || event.address != nil {
             section(strings.detailLocation) {
                 VStack(alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        if let venue = event.venue { Text(venue).font(.body.weight(.medium)) }
-                        if let address = event.address { Text(address).foregroundStyle(.white.opacity(0.7)) }
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let venue = event.venue { Text(venue).font(.system(size: 17, weight: .medium)) }
+                        if let address = event.address {
+                            Text(address).font(.system(size: 16)).foregroundStyle(Color(white: 0.7))
+                        }
                     }
                     if let lat = event.latitude?.doubleValue, let lon = event.longitude?.doubleValue {
                         let point = CLLocationCoordinate2D(latitude: lat, longitude: lon)
                         Map(initialPosition: .region(MKCoordinateRegion(center: point, latitudinalMeters: 800, longitudinalMeters: 800))) {
                             Marker(event.venue ?? event.title, coordinate: point)
                         }
-                        .frame(height: 150)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .frame(height: 140)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
                         .allowsHitTesting(false)
                     }
-                    Button(strings.openMap) { openMap() }.font(.subheadline.weight(.medium))
+                    Button(strings.openMap) { MapLink.open(event, openURL: openURL) }.font(.subheadline.weight(.medium))
                 }
             }
         }
@@ -94,24 +96,10 @@ struct EventFacts: View {
         return event.languages.map { names[$0] ?? $0 }.joined(separator: ", ")
     }
 
-    // Apple Maps by the point when the backend found one, by the text otherwise.
-    private func openMap() {
-        var components = URLComponents(string: "https://maps.apple.com/")
-        let place = [event.venue, event.address].compactMap { $0 }.joined(separator: ", ")
-        var items = [URLQueryItem(name: "q", value: place.isEmpty ? event.title : place)]
-        if let lat = event.latitude?.doubleValue, let lon = event.longitude?.doubleValue {
-            items.append(URLQueryItem(name: "ll", value: "\(lat),\(lon)"))
-        } else {
-            items[0].value = "\(place), \(event.city.name)"
-        }
-        components?.queryItems = items
-        if let url = components?.url { openURL(url) }
-    }
-
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.subheadline).foregroundStyle(.white.opacity(0.6))
-            Divider().overlay(Color.white.opacity(0.2))
+            Text(title).font(.system(size: 15)).foregroundStyle(Color(white: 0.69))
+            Rectangle().fill(Color.white.opacity(0.2)).frame(height: 0.8)
             content()
         }
     }
