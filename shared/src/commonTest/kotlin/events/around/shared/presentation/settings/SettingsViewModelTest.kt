@@ -5,7 +5,13 @@ import com.russhwolf.settings.MapSettings
 import events.around.core.model.AppLanguage
 import events.around.core.model.ThemeMode
 import events.around.shared.AppConfig
+import events.around.shared.data.network.AroundApi
+import events.around.shared.data.network.createHttpClient
 import events.around.shared.data.settings.SettingsRepository
+import events.around.shared.data.site.SiteRepository
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respondError
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -20,6 +26,12 @@ class SettingsViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val config = AppConfig(baseUrl = "https://example.test", versionName = "1.2.3", isDebug = false)
 
+    // Settings never call the network; the engine only has to exist.
+    private fun site(settings: MapSettings) = SiteRepository(
+        AroundApi(createHttpClient(MockEngine { respondError(HttpStatusCode.NotFound) }, config) { null }),
+        settings,
+    )
+
     @BeforeTest
     fun setUp() = Dispatchers.setMain(dispatcher)
 
@@ -29,15 +41,19 @@ class SettingsViewModelTest {
     @Test
     fun `starts from stored preferences`() = runTest(dispatcher) {
         val settings = MapSettings("theme" to "Dark", "language" to "Belarusian")
-        val viewModel = SettingsViewModel(SettingsRepository(settings), config)
+        val viewModel = SettingsViewModel(SettingsRepository(settings), site(settings), config)
 
-        assertEquals(SettingsUiState(ThemeMode.Dark, AppLanguage.Belarusian, "1.2.3"), viewModel.state.value)
+        with(viewModel.state.value) {
+            assertEquals(ThemeMode.Dark, theme)
+            assertEquals(AppLanguage.Belarusian, language)
+            assertEquals("1.2.3", versionName)
+        }
     }
 
     @Test
     fun `unknown stored value falls back to system`() = runTest(dispatcher) {
         val settings = MapSettings("theme" to "Sepia")
-        val viewModel = SettingsViewModel(SettingsRepository(settings), config)
+        val viewModel = SettingsViewModel(SettingsRepository(settings), site(settings), config)
 
         assertEquals(ThemeMode.System, viewModel.state.value.theme)
     }
@@ -45,7 +61,7 @@ class SettingsViewModelTest {
     @Test
     fun `selection is saved and emitted`() = runTest(dispatcher) {
         val settings = MapSettings()
-        val viewModel = SettingsViewModel(SettingsRepository(settings), config)
+        val viewModel = SettingsViewModel(SettingsRepository(settings), site(settings), config)
 
         viewModel.state.test {
             assertEquals(ThemeMode.System, awaitItem().theme)
