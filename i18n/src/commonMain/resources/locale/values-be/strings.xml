@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_events">Мае падзеі</string>
+    <string name="tab_profile">Профіль</string>
+    <string name="settings_title">Налады</string>
+    <string name="settings_appearance">Афармленне</string>
+    <string name="theme_system">Сістэмная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Цёмная</string>
+    <string name="settings_language">Мова</string>
+    <string name="language_system">Сістэмная</string>
+    <string name="settings_about">Пра праграму</string>
+    <string name="settings_version">Версія %s</string>
+    <string name="settings_open_source">Зроблена на аснове FeedFlow (Marco Gomiero), Apache License 2.0</string>
+    <string name="generic_error">Нешта пайшло не так. Паспрабуйце яшчэ раз.</string>
+    <string name="retry">Паўтарыць</string>
+    <string name="placeholder_empty">Тут пакуль нічога няма</string>
+</resources>

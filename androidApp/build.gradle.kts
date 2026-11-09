@@ -1,16 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.*
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.androidx.baselineprofile)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.triplet.play)
-    alias(libs.plugins.about.libraries.android)
-    alias(libs.plugins.crashlytics)
-    alias(libs.plugins.google.services)
-    alias(libs.plugins.feedflow.detekt)
-    alias(libs.plugins.feedflow.versioning)
+    alias(libs.plugins.around.detekt)
+    alias(libs.plugins.around.versioning)
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -19,44 +14,23 @@ val appVersionCode = extra["appVersionCode"] as () -> Int
 @Suppress("UNCHECKED_CAST")
 val appVersionName = extra["appVersionName"] as () -> String
 
-val local = Properties()
-val localProperties: File = rootProject.file("keystore.properties")
-if (localProperties.exists()) {
-    localProperties.inputStream().use { local.load(it) }
-}
+val baseUrl: String = providers.gradleProperty("around.baseUrl").get()
 
-val dropboxAppKey: String = local.getProperty("dropbox_key").orEmpty()
-if (dropboxAppKey.isEmpty()) {
-    println("Dropbox key not set in keystore.properties. Please add it to the file with the key 'dropbox_key'")
+// Release signing is optional: without keystore.properties the release build is simply unsigned.
+val keystore = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
-val revenueCatAndroidApiKey = local.getProperty("revenuecat_android_api_key")
-    ?: System.getenv("REVENUECAT_ANDROID_API_KEY").orEmpty()
-val revenueCatTestStoreApiKey = local.getProperty("revenuecat_test_store_api_key")
-    ?: System.getenv("REVENUECAT_TEST_STORE_API_KEY").orEmpty()
-val escapedRevenueCatAndroidApiKey = revenueCatAndroidApiKey
-    .replace("\\", "\\\\")
-    .replace("\"", "\\\"")
-val escapedRevenueCatTestStoreApiKey = revenueCatTestStoreApiKey
-    .replace("\\", "\\\\")
-    .replace("\"", "\\\"")
 
 android {
-    namespace = "com.prof18.feedflow.android"
+    namespace = "events.around.android"
     compileSdk = libs.versions.android.compile.sdk.get().toInt()
     defaultConfig {
-        applicationId = "com.prof18.feedflow"
+        applicationId = "events.around.app"
         minSdk = libs.versions.android.min.sdk.get().toInt()
         targetSdk = libs.versions.android.target.sdk.get().toInt()
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = appVersionCode()
         versionName = appVersionName()
-        buildConfigField("String", "REVENUECAT_API_KEY", "\"\"")
-
-        addManifestPlaceholders(
-            mapOf(
-                "dropboxKey" to dropboxAppKey,
-            ),
-        )
+        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
     }
 
     buildFeatures {
@@ -70,11 +44,13 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = local.getProperty("keyAlias")
-            keyPassword = local.getProperty("keyPassword")
-            storeFile = file(local.getProperty("storeFile") ?: "NOT_FOUND")
-            storePassword = local.getProperty("storePassword")
+        if (keystore.getProperty("storeFile") != null) {
+            create("release") {
+                keyAlias = keystore.getProperty("keyAlias")
+                keyPassword = keystore.getProperty("keyPassword")
+                storeFile = file(keystore.getProperty("storeFile"))
+                storePassword = keystore.getProperty("storePassword")
+            }
         }
     }
 
@@ -82,46 +58,17 @@ android {
         getByName("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            buildConfigField("String", "DROPBOX_APP_KEY", "\"$dropboxAppKey\"")
-            buildConfigField("String", "REVENUECAT_API_KEY", "\"$escapedRevenueCatTestStoreApiKey\"")
         }
 
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            buildConfigField("String", "DROPBOX_APP_KEY", "\"$dropboxAppKey\"")
         }
-    }
-
-    flavorDimensions += "version"
-    productFlavors {
-        create("fdroid") {
-            dimension = "version"
-        }
-
-        create("googlePlay") {
-            dimension = "version"
-            isDefault = true
-            buildConfigField("String", "REVENUECAT_API_KEY", "\"$escapedRevenueCatAndroidApiKey\"")
-        }
-    }
-
-    aboutLibraries {
-        collect {
-            configPath.set(file("config/aboutlibraries"))
-        }
-        export {
-            excludeFields.set(listOf("generated"))
-        }
-    }
-
-    testOptions {
-        unitTests.isIncludeAndroidResources = true
     }
 
     packaging {
@@ -130,11 +77,8 @@ android {
                 "META-INF/DEPENDENCIES",
                 "META-INF/LICENSE",
                 "META-INF/LICENSE.txt",
-                "META-INF/license.txt",
                 "META-INF/NOTICE",
                 "META-INF/NOTICE.txt",
-                "META-INF/notice.txt",
-                "META-INF/ASL2.0",
                 "META-INF/INDEX.LIST",
             )
         }
@@ -143,141 +87,41 @@ android {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions {
-        freeCompilerArgs = listOf(
+        freeCompilerArgs.addAll(
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-            "-opt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
-            "-opt-in=androidx.compose.animation.ExperimentalAnimationApi",
-            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
             "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
-            "-opt-in=kotlinx.coroutines.FlowPreview",
-            "-opt-in=co.touchlab.kermit.ExperimentalKermitApi",
-            "-opt-in=kotlin.ExperimentalStdlibApi",
         )
         jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
-baselineProfile {
-    // A single profile in src/main is shared by both flavors, so the fdroid builds
-    // (which never receive Play cloud profiles) get the same coverage.
-    mergeIntoMain = true
-}
-
 dependencies {
     implementation(project(":shared"))
-    implementation(project(":i18n"))
+
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.io.coil.compose)
-    implementation(libs.io.coil.network)
-    implementation(libs.io.coil.svg)
-    implementation(libs.lyricist)
-    implementation(libs.immutable.collections)
-    implementation(libs.saket.swipe)
-    implementation(libs.compose.unstyled.slider)
-    implementation(libs.androidx.profileinstaller)
-    "baselineProfile"(project(":benchmarks"))
- 
-    implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.compose.foundation)
-    implementation(libs.compose.material3)
-    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3.adaptive.navigationsuite)
- 
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.compose.material3)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewModel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
-    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
-    implementation(libs.bundles.about.libraries)
-
-    implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.session)
+    implementation(libs.io.coil.compose)
+    implementation(libs.io.coil.network)
     implementation(libs.androidx.browser)
-    implementation(libs.androidx.webkit)
-    debugImplementation(libs.com.prof18.rss.parser)
-    debugImplementation(project(":database"))
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.test.core.ktx)
-    androidTestImplementation(libs.androidx.test.uiautomator)
-    implementation(libs.compose.webview)
-    implementation(libs.colorpicker.compose)
-    implementation(libs.reorderable)
-    implementation(libs.telephoto.zoomable)
+
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
     implementation(libs.koin.android)
-    implementation(libs.koin.workmanager)
     implementation(libs.koin.composeVM)
     implementation(libs.koin.core.vm)
 
-    implementation(libs.dropbox.core.android)
-    implementation(libs.workmanager)
-    implementation(libs.androidx.lifecycle.process)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.glance.appwidget)
-    implementation(libs.glance.material)
-
-    "googlePlayImplementation"(platform(libs.firebase.bom))
-    "googlePlayImplementation"(libs.firebase.crashlytics)
-    "googlePlayImplementation"(libs.touchlab.kermit.crash)
-    "googlePlayImplementation"(libs.play.review)
-    "googlePlayImplementation"(libs.telemetry.deck)
-    "googlePlayImplementation"(libs.google.identity.googleid)
-    "googlePlayImplementation"(libs.androidx.credentials)
-    "googlePlayImplementation"(libs.androidx.credentials.play.services.auth)
-    "googlePlayImplementation"(libs.google.play.services.auth)
-    "googlePlayImplementation"(libs.kotlinx.coroutines.play.services)
-    "googlePlayImplementation"(libs.google.api.client.android)
-    "googlePlayImplementation"(libs.google.api.services.drive)
-    "googlePlayImplementation"(libs.revenuecat.purchases)
-    "googlePlayImplementation"(libs.revenuecat.purchases.ui)
-
-    debugImplementation(libs.androidx.compose.ui.tooling)
-
-    testImplementation(platform(libs.androidx.compose.bom))
-    testImplementation(libs.junit)
-    testImplementation(libs.koin.test)
-    testImplementation(libs.multiplatform.settings.test)
-    testImplementation(libs.multiplatform.settings)
-    testImplementation(libs.google.api.client)
-    testImplementation(libs.google.api.services.drive)
-    testImplementation(libs.org.robolectric)
-    testImplementation(libs.androidx.compose.ui.test.junit4)
-    testImplementation(libs.androidx.test.core.ktx)
-    testImplementation(libs.kotlinx.coroutines.test)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-}
-
-play {
-    // The play_config.json file will be provided on CI
-    serviceAccountCredentials.fileProvider(
-        providers.environmentVariable("FEEDFLOW_PLAY_CONFIG_JSON")
-            .map { file(it) }
-            .orElse(provider { file("../play_config.json") }),
-    )
-    track.set("internal")
-}
-
-androidComponents {
-    onVariants { variant ->
-        val name = variant.name.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-        }
-        val googleTask = tasks.findByName("process${name}GoogleServices")
-        val uploadTask = tasks.findByName("uploadCrashlyticsMappingFile$name")
-        googleTask?.enabled = !name.contains("Fdroid")
-        uploadTask?.enabled = !name.contains("Fdroid")
-    }
-}
-
-// Include Google Play cloud adapter tests in the repository-wide allTests selection.
-tasks.register("allTests") {
-    group = "verification"
-    dependsOn("testGooglePlayDebugUnitTest")
+    implementation(libs.immutable.collections)
 }

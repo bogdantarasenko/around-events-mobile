@@ -1,5 +1,0 @@
-• Recibe unha notificación por cada artigo novo, coa súa miniatura
-• Escolle a fonte e o tamaño do título do lector, con vista previa en directo
-• Os artigos novos agardan tras unha pílula, así a lista xa non salta mentres le
-• Mantén os artigos sen ler ao desprazarte, configurable por feed
-• Os sitios coa verificación de Cloudflare pódense validar para que carguen os seus feeds e artigos

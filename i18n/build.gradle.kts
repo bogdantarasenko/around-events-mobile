@@ -2,13 +2,13 @@ import com.google.devtools.ksp.gradle.KspAATask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
-    alias(libs.plugins.feedflow.library)
+    alias(libs.plugins.around.library)
     alias(libs.plugins.ksp)
 }
 
 kotlin {
     android {
-        namespace = "com.prof18.feedflow.i18n"
+        namespace = "events.around.i18n"
     }
 
     applyDefaultHierarchyTemplate()
@@ -25,6 +25,12 @@ kotlin {
         jvmMain {
             dependsOn(commonJvmAndroidMain)
         }
+
+        commonTest {
+            dependencies {
+                implementation(libs.kotlin.test)
+            }
+        }
     }
 }
 
@@ -34,8 +40,8 @@ dependencies {
 
 ksp {
     arg("lyricist.xml.resourcesPath", "$projectDir/src/commonMain/resources/locale")
-    arg("lyricist.packageName", "com.prof18.feedflow.i18n")
-    arg("lyricist.xml.moduleName", "FeedFlow")
+    arg("lyricist.packageName", "events.around.i18n")
+    arg("lyricist.xml.moduleName", "Around")
     arg("lyricist.xml.defaultLanguageTag", "en")
     arg("lyricist.xml.generateComposeAccessors", "false")
 }

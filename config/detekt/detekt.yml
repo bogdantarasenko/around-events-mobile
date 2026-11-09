@@ -99,9 +99,7 @@ ktlint:
 Compose:
   CompositionLocalAllowlist:
     allowedCompositionLocals:
-      - LocalComposeWindow
-      - LocalFeedFlowStrings
-      - LocalReduceMotion
+      - LocalAroundStrings
   UnnecessaryLaunchedEffect:
     # Focus must be requested after the node is attached, which a frame-deferred LaunchedEffect guarantees.
     allowedCallNames:

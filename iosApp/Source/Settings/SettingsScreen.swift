@@ -1,83 +1,63 @@
-import FeedFlowKit
+import AroundKit
 import SwiftUI
 
 struct SettingsScreen: View {
-    @Environment(AppState.self)
-    private var appState
-    @Environment(\.dismiss)
-    private var dismiss
-    private let feedFlowStrings = Deps.shared.getStrings()
-
-    let fetchFeeds: () -> Void
-    let onDone: () -> Void
+    @Environment(\.strings) private var strings
+    @StateObject private var store = VMStoreOwner<SettingsViewModel>(Deps.shared.getSettingsViewModel())
+    @State private var state: SettingsUiState?
 
     var body: some View {
-        NavigationStack {
-            @Bindable var appState = appState
-
-            Form {
-                Section {
-                    NavigationLink(destination: AppearanceScreen()) {
-                        Label(feedFlowStrings.settingsAppearance, systemImage: "paintbrush")
+        Form {
+            if let state {
+                Section(strings.settingsAppearance) {
+                    Picker(strings.settingsAppearance, selection: themeBinding(state)) {
+                        Text(strings.themeSystem).tag(ThemeMode.system)
+                        Text(strings.themeLight).tag(ThemeMode.light)
+                        Text(strings.themeDark).tag(ThemeMode.dark)
                     }
-                    .accessibilityIdentifier(SettingsAccessibilityIdentifiers.appearanceRow)
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
 
-                    NavigationLink(destination: FeedsAndAccountsScreen(
-                        fetchFeeds: fetchFeeds
-                    )) {
-                        Label(feedFlowStrings.settingsFeedsAndAccounts, systemImage: "arrow.triangle.2.circlepath")
-                    }
-                    .accessibilityIdentifier(SettingsAccessibilityIdentifiers.feedsAndAccountsRow)
-
-                    NavigationLink(destination: FeedListSettingsScreen()) {
-                        Label(feedFlowStrings.settingsFeedListTitle, systemImage: "list.bullet.rectangle.portrait")
-                    }
-                    .accessibilityIdentifier(SettingsAccessibilityIdentifiers.feedListRow)
-
-                    NavigationLink(destination: ReadingBehaviorScreen()) {
-                        Label(feedFlowStrings.settingsReadingBehavior, systemImage: "book")
-                    }
-                    .accessibilityIdentifier(SettingsAccessibilityIdentifiers.readingBehaviorRow)
-
-                    NavigationLink(destination: SyncAndStorageScreen()) {
-                        Label(feedFlowStrings.settingsSyncAndStorage, systemImage: "externaldrive")
-                    }
-                    .accessibilityIdentifier(SettingsAccessibilityIdentifiers.syncAndStorageRow)
-
-                    if RevenueCatSupport.isAvailable {
-                        NavigationLink {
-                            SupportPaywallScreen()
-                        } label: {
-                            Label(feedFlowStrings.supportTheProject, systemImage: "heart")
+                Section(strings.settingsLanguage) {
+                    Picker(strings.settingsLanguage, selection: languageBinding(state)) {
+                        ForEach(languages, id: \.self) { language in
+                            Text(LanguageName.of(language, system: strings.languageSystem)).tag(language)
                         }
-                        .accessibilityIdentifier(SettingsAccessibilityIdentifiers.supportProjectRow)
                     }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                }
 
-                    NavigationLink(destination: AboutAndSupportScreen()) {
-                        Label(feedFlowStrings.settingsAboutAndSupport, systemImage: "info.circle")
-                    }
-                } footer: {
-                    if let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-                        Text(feedFlowStrings.aboutAppVersion(appVersion))
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, Spacing.small)
-                    }
+                Section(strings.settingsAbout) {
+                    Text(strings.settingsVersion(state.versionName))
+                    Text(strings.settingsOpenSource)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
             }
-            .scrollContentBackground(.hidden)
-            .toolbar {
-                Button {
-                    onDone()
-                    dismiss()
-                } label: {
-                    Text(feedFlowStrings.actionDone).bold()
-                }
-                .accessibilityIdentifier(SettingsAccessibilityIdentifiers.doneButton)
-            }
-            .navigationTitle(Text(feedFlowStrings.settingsTitle))
-            .navigationBarTitleDisplayMode(.inline)
-            .background(Color.secondaryBackgroundColor)
         }
-        .toggleStyle(BlueToggleStyle())
+        .navigationTitle(strings.settingsTitle)
+        .task {
+            for await value in store.instance.state {
+                state = value
+            }
+        }
+    }
+
+    private let languages: [AppLanguage] = [.system, .ukrainian, .russian, .belarusian, .english]
+
+    private func themeBinding(_ state: SettingsUiState) -> Binding<ThemeMode> {
+        Binding(
+            get: { state.theme },
+            set: { store.instance.onThemeSelected(theme: $0) }
+        )
+    }
+
+    private func languageBinding(_ state: SettingsUiState) -> Binding<AppLanguage> {
+        Binding(
+            get: { state.language },
+            set: { store.instance.onLanguageSelected(language: $0) }
+        )
     }
 }

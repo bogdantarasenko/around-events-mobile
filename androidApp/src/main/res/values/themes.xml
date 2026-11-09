@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window background before Compose draws; Compose owns the real theme. -->
+    <style name="Theme.Around" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+
+    <color name="window_background">#FFFFFFFF</color>
+    <color name="ic_launcher_background">#FF1F1F24</color>
+</resources>

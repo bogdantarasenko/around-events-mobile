@@ -1,5 +1,0 @@
-• Dostávaj oznámenie o každom novom článku s jeho náhľadom
-• Vyber si písmo a veľkosť nadpisu v čítačke so živým náhľadom
-• Nové články čakajú za štítkom, takže zoznam pri čítaní už neskáče
-• Nechaj články pri posúvaní neprečítané, nastaviteľné pre každý kanál
-• Weby s kontrolou Cloudflare možno overiť, aby sa ich kanály a články načítali

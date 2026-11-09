@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `kotlin-dsl`
-    alias(libs.plugins.flatpak.gradle.generator)
 }
 
 java {
@@ -24,27 +23,17 @@ dependencies {
 
 gradlePlugin {
     plugins {
-        register("cloudSyncTests") {
-            id = "com.feedflow.cloud-sync-tests"
-            implementationClass = "CloudSyncTestsPlugin"
-        }
         register("library") {
-            id = "com.feedflow.library"
+            id = "events.around.library"
             implementationClass = "KmpLibraryConventionPlugin"
         }
         register("detekt") {
-            id = "com.feedflow.detekt"
+            id = "events.around.detekt"
             implementationClass = "DetektConventionPlugin"
         }
         register("versioning") {
-            id = "com.feedflow.versioning"
+            id = "events.around.versioning"
             implementationClass = "VersioningConventionPlugin"
         }
     }
-}
-
-tasks.flatpakGradleGenerator {
-    outputFile = file("../../desktopApp/packaging/flatpak/flatpak-sources-convention.json")
-    downloadDirectory.set("./offline-repository")
-    excludeConfigurations.set(listOf("testCompileClasspath", "testRuntimeClasspath"))
 }

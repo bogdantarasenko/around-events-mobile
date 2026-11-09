@@ -1,28 +1,21 @@
 plugins {
-    alias(libs.plugins.feedflow.library)
+    alias(libs.plugins.around.library)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
     android {
-        namespace = "com.prof18.feedflow.core"
+        namespace = "events.around.core"
         withHostTest {}
-    }
-
-    compilerOptions {
-        optIn.add("kotlin.contracts.ExperimentalContracts")
     }
 
     sourceSets {
         commonMain {
             dependencies {
-                implementation(libs.androidx.compose.runtime.annotation)
-                implementation(libs.immutable.collections)
                 implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.touchlab.kermit)
-                implementation(libs.kotlinx.date.time)
-                implementation(libs.com.prof18.rss.parser)
-                implementation(libs.ktor.client.core)
-                implementation(libs.ktor.http)
+                implementation(libs.kotlinx.serialization.json)
+                api(libs.kotlinx.date.time)
+                api(libs.immutable.collections)
             }
         }
 

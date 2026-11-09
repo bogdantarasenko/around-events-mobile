@@ -21,11 +21,7 @@ class VersioningConventionPlugin : Plugin<Project> {
 
         fun appVersionCode(): Int {
             val ciBuildNumber = System.getenv("GITHUB_RUN_NUMBER")
-            return if (ciBuildNumber != null) {
-                ciBuildNumber.toInt() + 6000
-            } else {
-                1
-            }
+            return ciBuildNumber?.toInt() ?: 1
         }
 
         fun appVersionName(): String = "$appMajorVersion.$appMinorVersion.$appPatchVersion"

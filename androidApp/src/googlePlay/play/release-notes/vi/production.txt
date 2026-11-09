@@ -1,5 +1,0 @@
-• Nhận thông báo cho mỗi bài viết mới, kèm ảnh thu nhỏ
-• Chọn phông chữ và cỡ tiêu đề của trình đọc, có xem trước trực tiếp
-• Bài viết mới chờ sau một nhãn, nên danh sách không còn nhảy khi bạn đọc
-• Giữ bài viết ở trạng thái chưa đọc khi cuộn, đặt riêng cho từng nguồn cấp
-• Các trang có bước kiểm tra Cloudflare có thể được xác minh để nguồn cấp và bài viết tải được

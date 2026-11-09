@@ -1,0 +1,5 @@
+#include "Shared.xcconfig"
+
+AROUND_BUNDLE_ID = events.around.app.debug
+AROUND_DISPLAY_NAME = Around Debug
+AROUND_IS_DEBUG = YES

@@ -1,0 +1,12 @@
+Around — mobile client for around.events
+
+This project started as a fork of FeedFlow (https://github.com/prof18/feed-flow),
+Copyright Marco Gomiero, licensed under the Apache License, Version 2.0.
+
+The build setup (Gradle convention plugins, version catalog, Detekt config), the
+Lyricist-based i18n module, the Kotlin Multiplatform to SwiftUI bridge
+(VMStoreOwner, SKIE, the embed-and-sign aggregate target) and the iOS run script
+are derived from FeedFlow. The RSS reader, sync, desktop app and all screens were
+removed; the remaining application code was written for this project.
+
+"FeedFlow" is the name of the original project and is not used as the name of this app.

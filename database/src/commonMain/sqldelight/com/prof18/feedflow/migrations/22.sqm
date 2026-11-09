@@ -1,3 +1,0 @@
-CREATE TABLE feed_item_ids_for_checks(
-    url_hash TEXT NOT NULL PRIMARY KEY
-);

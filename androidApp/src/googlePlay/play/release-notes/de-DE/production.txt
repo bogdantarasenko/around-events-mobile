@@ -1,5 +1,0 @@
-• Du bekommst für jeden neuen Artikel eine Benachrichtigung mit Vorschaubild
-• Wähle Schriftart und Titelgröße für den Reader, mit Live-Vorschau
-• Neue Artikel warten hinter einer Anzeige, damit die Liste beim Lesen nicht mehr springt
-• Artikel beim Scrollen ungelesen lassen, einstellbar pro Feed
-• Seiten mit Cloudflare-Prüfung lassen sich bestätigen, damit ihre Feeds und Artikel laden

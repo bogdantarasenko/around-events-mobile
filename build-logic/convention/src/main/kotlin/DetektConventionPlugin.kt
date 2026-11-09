@@ -21,8 +21,8 @@ class DetektConventionPlugin : Plugin<Project> {
                 config.setFrom("$rootDir/config/detekt/detekt.yml")
                 buildUponDefaultConfig.set(true)
                 parallel.set(true)
-                // -Pfeedflow.detektDebug=true prints the compiler errors behind "compiler errors found during analysis".
-                debug.set(providers.gradleProperty("feedflow.detektDebug").map(String::toBoolean).orElse(false))
+                // -Paround.detektDebug=true prints the compiler errors behind "compiler errors found during analysis".
+                debug.set(providers.gradleProperty("around.detektDebug").map(String::toBoolean).orElse(false))
 
                 source.setFrom(
                     files(
@@ -54,7 +54,7 @@ class DetektConventionPlugin : Plugin<Project> {
     }
 
     private companion object {
-        // JVM compilation of KMP modules (commonMain + jvmMain) and both Android app flavors.
-        val TYPE_RESOLVED_TASKS = setOf("detektMainJvm", "detektGooglePlayDebug", "detektFdroidDebug")
+        // JVM compilation of KMP modules (commonMain + jvmMain) and the Android app.
+        val TYPE_RESOLVED_TASKS = setOf("detektMainJvm", "detektDebug")
     }
 }

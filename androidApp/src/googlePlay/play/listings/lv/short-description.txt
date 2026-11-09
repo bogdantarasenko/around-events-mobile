@@ -1,1 +1,0 @@
-Minimālistisks RSS lasītājs ar bezsaisti un elastīgu sinhronizāciju.

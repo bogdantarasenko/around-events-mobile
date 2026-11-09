@@ -1,5 +1,0 @@
-• Minden új cikkről értesítést kapsz, a bélyegképével együtt
-• Válaszd ki az olvasó betűtípusát és a cím méretét, élő előnézettel
-• Az új cikkek egy jelzés mögött várnak, így a lista olvasás közben már nem ugrál
-• Görgetés közben is olvasatlanul hagyhatod a cikkeket, hírcsatornánként beállíthatóan
-• A Cloudflare-ellenőrzést használó oldalak megerősíthetők, hogy a hírcsatornáik és cikkeik betöltődjenek

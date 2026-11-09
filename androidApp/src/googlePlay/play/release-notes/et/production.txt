@@ -1,5 +1,0 @@
-• Saa iga uue artikli kohta teavitus koos pisipildiga
-• Vali lugeri font ja pealkirja suurus otseeelvaatega
-• Uued artiklid ootavad märgi taga, nii et loend ei hüppa lugemise ajal enam
-• Hoia artiklid kerimisel lugemata, seadistatav iga voo jaoks
-• Cloudflare’i kontrolliga saite saab kinnitada, et nende vood ja artiklid laadiksid

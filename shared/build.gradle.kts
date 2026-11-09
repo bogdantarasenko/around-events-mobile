@@ -6,74 +6,40 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.feedflow.detekt)
+    alias(libs.plugins.around.detekt)
     alias(libs.plugins.skie)
-    id("com.feedflow.cloud-sync-tests")
-}
-
-val generateArticleReportBuildInfo = tasks.register("generateArticleReportBuildInfo") {
-    val parserVersion = libs.versions.klead
-    inputs.property("parserVersion", parserVersion)
-    val outputDirectory = layout.buildDirectory.dir("generated/article-report/commonMain/kotlin")
-    outputs.dir(outputDirectory)
-    doLast {
-        val output = outputDirectory.get().file(
-            "com/prof18/feedflow/shared/domain/articlereport/ArticleReportBuildInfo.kt",
-        ).asFile
-        output.parentFile.mkdirs()
-        output.writeText(
-            """
-            package com.prof18.feedflow.shared.domain.articlereport
-
-            internal object ArticleReportBuildInfo {
-                const val PARSER_VERSION = "${parserVersion.get()}"
-            }
-            """.trimIndent() + "\n",
-        )
-    }
 }
 
 kotlin {
     jvmToolchain(21)
 
     android {
-        namespace = "com.prof18.feedflow.shared"
+        namespace = "events.around.shared"
         compileSdk = libs.versions.android.compile.sdk.get().toInt()
         minSdk = libs.versions.android.min.sdk.get().toInt()
         compilerOptions.jvmTarget = JvmTarget.JVM_21
 
         withHostTest {}
-        withDeviceTest {
-            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        }
-
-        androidResources {
-            enable = true
-        }
     }
 
+    // JVM target only for fast compile checks and unit tests; there is no desktop app.
     jvm()
 
     listOf(
         iosArm64(),
         iosSimulatorArm64(),
+        // Simulator on Intel Macs.
+        iosX64(),
     ).forEach {
         it.binaries.framework {
-            baseName = "FeedFlowKit"
+            baseName = "AroundKit"
             isStatic = true
-            binaryOption("bundleId", "com.prof18.feedflow.FeedFlowKit")
+            binaryOption("bundleId", "events.around.AroundKit")
 
             export(project.dependencies.project(":i18n"))
             export(project.dependencies.project(":core"))
-            export(project.dependencies.project(":feedSync:dropbox"))
-            export(project.dependencies.project(":feedSync:googledrive"))
-            export(project.dependencies.project(":feedSync:icloud"))
             export(libs.touchlab.kermit.simple)
             export(libs.androidx.lifecycle.viewModel)
-        }
-        it.binaries.all {
-            linkerOpts("-lsqlite3")
         }
     }
 
@@ -88,65 +54,42 @@ kotlin {
             languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
             languageSettings.optIn("kotlin.time.ExperimentalTime")
             languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
-            languageSettings.optIn("kotlinx.coroutines.FlowPreview")
-            languageSettings.optIn("co.touchlab.kermit.ExperimentalKermitApi")
         }
 
         matching { it.name.startsWith("ios") }.all {
-            languageSettings.optIn("com.russhwolf.settings.ExperimentalSettingsApi")
             languageSettings.optIn("com.russhwolf.settings.ExperimentalSettingsImplementation")
-            languageSettings.optIn("kotlin.experimental.ExperimentalNativeApi")
-            languageSettings.optIn("kotlinx.cinterop.BetaInteropApi")
             languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
         }
 
         commonMain {
-            kotlin.srcDir(generateArticleReportBuildInfo)
             dependencies {
-                implementation(libs.androidx.compose.runtime.annotation)
-                implementation(project(":database"))
-                implementation(project(":feedSync:database"))
-                implementation(project(":feedSync:icloud"))
-                implementation(project(":feedSync:greader"))
-                implementation(project(":feedSync:networkcore"))
-                implementation(project(":feedSync:feedbin"))
                 implementation(project.dependencies.platform(libs.koin.bom))
                 implementation(libs.koin.core)
                 implementation(libs.koin.core.vm)
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
-                implementation(libs.com.prof18.rss.parser)
-                implementation(libs.csv)
                 implementation(libs.multiplatform.settings)
-                implementation(libs.kotlinx.date.time)
                 implementation(libs.ktor.client.core)
-                implementation(libs.ktor.client.mock)
+                implementation(libs.ktor.content.negotiation)
+                implementation(libs.ktor.serialization)
+                implementation(libs.ktor.logging)
                 implementation(libs.skie.annotation)
-                implementation(libs.stately.concurrency)
-                implementation(libs.klead)
-                implementation(libs.ksoup)
 
                 api(project(":core"))
                 api(project(":i18n"))
-                api(project(":feedSync:dropbox"))
-                api(project(":feedSync:googledrive"))
                 api(libs.touchlab.kermit)
-                api(libs.immutable.collections)
                 api(libs.androidx.lifecycle.viewModel)
             }
         }
 
         commonTest {
             dependencies {
-                implementation(project(":database"))
-                implementation(project(":feedSync:feedbin"))
-                implementation(project(":feedSync:test-utils"))
                 implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.test)
-                implementation(libs.touchlab.kermit.test)
                 implementation(libs.koin.test)
                 implementation(libs.turbine)
                 implementation(libs.multiplatform.settings.test)
+                implementation(libs.ktor.client.mock)
             }
         }
 
@@ -158,103 +101,31 @@ kotlin {
             }
         }
 
-        val commonJvmAndroidTest = create("commonJvmAndroidTest") {
-            dependsOn(commonTest.get())
-
-            dependencies {
-                implementation(libs.kotlin.test.junit)
-            }
-        }
-
-        val androidTest = create("androidTest") {
-            dependsOn(commonJvmAndroidTest)
-
-            dependencies {
-                implementation(libs.androidx.test.core.ktx)
-            }
-        }
-
-        val commonMobileMain = create("commonMobileMain") {
-            dependsOn(commonMain.get())
-        }
-
         androidMain {
             dependsOn(commonJvmAndroidMain)
-            dependsOn(commonMobileMain)
 
             dependencies {
                 implementation(libs.koin.android)
-                implementation(libs.workmanager)
-                implementation(libs.koin.workmanager)
             }
         }
 
         getByName("androidHostTest") {
-            dependsOn(androidTest)
-
             dependencies {
                 implementation(libs.junit)
-                implementation(libs.org.robolectric)
-                implementation(libs.androidx.test.core.ktx)
-                implementation(libs.sqldelight.sqlite.driver)
-                implementation(libs.workmanager.testing)
-            }
-        }
-
-        getByName("androidDeviceTest") {
-            dependsOn(androidTest)
-            dependencies {
-                implementation(libs.androidx.test.ext.junit)
-                implementation(libs.androidx.test.runner)
-                implementation(libs.androidx.test.core.ktx)
-                implementation(libs.sqldelight.android.driver)
-                implementation(libs.workmanager.testing)
             }
         }
 
         iosMain {
-            dependsOn(commonMobileMain)
-
             dependencies {
-                api(project(":feedSync:icloud"))
                 api(libs.touchlab.kermit.simple)
-                implementation(libs.touchlab.kermit.crash)
-                implementation(libs.crashk.ios)
                 implementation(libs.ktor.client.darwin)
             }
         }
 
         jvmMain {
             dependsOn(commonJvmAndroidMain)
-
-            dependencies {
-                implementation(libs.kotlinx.coroutines.swing)
-                api(libs.sentry)
-            }
-        }
-
-        jvmTest {
-            dependsOn(commonJvmAndroidTest)
-            dependencies {
-                implementation(libs.sqldelight.sqlite.driver)
-                implementation(libs.sqlite.jdbc)
-            }
         }
     }
-}
-
-// Configure TEST_RESOURCES_ROOT for JVM and iOS tests
-val testResourcesDir = project(":feedSync:test-utils")
-    .file("src/commonMain/resources")
-    .absolutePath
-
-tasks.withType<Test>().configureEach {
-    environment("TEST_RESOURCES_ROOT", testResourcesDir)
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest>().configureEach {
-    environment("TEST_RESOURCES_ROOT", testResourcesDir)
-    environment("SIMCTL_CHILD_TEST_RESOURCES_ROOT", testResourcesDir)
 }
 
 skie {
@@ -264,9 +135,6 @@ skie {
         }
         // Third-party types whose `description` collides with NSObject.description; Swift never uses them.
         group("io.ktor.http.HttpStatusCode") {
-            SuppressSkieWarning.NameCollision(true)
-        }
-        group("com.prof18.rssparser.model") {
             SuppressSkieWarning.NameCollision(true)
         }
     }

@@ -1,3 +1,0 @@
-SID=unused
-LSID=unused
-Auth=test-auth-token-placeholder

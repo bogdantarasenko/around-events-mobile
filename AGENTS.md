@@ -1,386 +1,55 @@
 # AGENTS.md
 
-## Project Overview
+## Project
 
-FeedFlow is a multi-platform RSS reader built with Kotlin Multiplatform, Compose Multiplatform and SwiftUI.
-It targets Android, iOS, macOS, Windows, and Linux.
-The app uses SwiftUI for iOS-specific UI components and Compose for all other platforms.
-All the business logic is shared via Kotlin Multiplatform.
+Around is the mobile client for around.events: Android (Jetpack Compose) and iOS (SwiftUI) on top of
+shared Kotlin Multiplatform logic. It started from FeedFlow; only the build setup and the KMP-to-Swift
+bridge were kept (see `NOTICE`). The product scope is `../around-events-mobile-prd.md`; the backend
+is `../around-events`. Build only on endpoints that backend already has.
 
-## Project Structure & Module Organization
+## Modules
 
-### Module Structure
-- **core/**: Core domain models and utilities shared across all platforms
-- **shared/**: Main business logic, repositories, view models, and data layer
-- **database/**: SQLDelight database implementation
-- **i18n/**: Internationalization resources
-- **feedSync/**: Feed synchronization modules (Dropbox, FreshRSS, iCloud, etc)
-- **androidApp/**: Android-owned Jetpack Compose UI with the AndroidX Compose BOM
-- **iosApp/**: iOS app with SwiftUI
-- **desktopApp/**: Desktop-owned Jewel UI for Windows, Linux, and macOS; ordinary JVM source/test sets
-- **website/**: Hugo-based website
+- `core/` — domain models, no platform code
+- `i18n/` — strings (en default, uk, ru, be) in `src/commonMain/resources/locale/values-*/strings.xml`
+- `shared/` — repositories, network, ViewModels, Koin DI; iOS framework `AroundKit`
+- `androidApp/` — Compose UI, Navigation 3
+- `iosApp/` — SwiftUI; `Around.xcodeproj` is generated from `project.yml` and not committed
+- `build-logic/` — convention plugins `events.around.library`, `.detekt`, `.versioning`
 
-## Build, Test, and Development Commands
+## Commands
 
-### Build Commands
-All Gradle commands in this section should be run with `--quiet --console=plain`.
+Run Gradle with `--quiet --console=plain`. Gradle needs `JAVA_HOME` pointing at a JDK 21+.
 
-- `./gradlew --quiet --console=plain detekt allTests` -> Run all checks including tests and linting for Shared code, Android and Desktop
-- `.scripts/ci.sh` -> Run the local equivalent of `.github/workflows/code-checks.yaml` (translation refresh, SwiftLint, Gradle checks, Android/Desktop/iOS builds)
-- `./gradlew --quiet --console=plain detekt` -> Run static analysis with Detekt for Shared code, Android and Desktop
-- `.scripts/ios-format.sh` -> Format iOS code through swiftformat and swiftlint
-- `.scripts/ios-tests.sh` -> Run the Swift unit tests in the `iOSTests` scheme on an iPhone simulator (everything except `CloudSyncTests`, which `allTests` runs)
-- `./gradlew --quiet --console=plain test` -> Run all tests for Shared code, Android and Desktop
-- `.scripts/refresh-translations.sh` -> Regenerate i18n translation code after adding new translations
-- `./gradlew --quiet --console=plain :androidApp:assembleGooglePlayDebug` -> Build the Android debug APK (then deploy/run with the `android` CLI, see "Running & validating the Android app")
-- `./gradlew --quiet --console=plain :androidApp:compileGooglePlayDebugKotlin` -> Quick compile check for Android (no APK assembly)
-- `.scripts/run-android.sh` -> Install and launch Android Google Play debug (wraps `:androidApp:installGooglePlayDebug`)
-- `.scripts/add-android-feed.sh <url>...` -> Add RSS feeds to the app on a connected device via the share intent, without typing URLs on the device
-- `./gradlew --quiet --console=plain desktopApp:run` -> Run Desktop app
-- `./gradlew --quiet --console=plain :desktopApp:compileKotlinJvm` -> Quick compile check for Desktop
-- `./gradlew --quiet --console=plain :desktopApp:jvmMainClasses` -> Compile Desktop main classes (faster than full build)
-- `.scripts/delete-desktop-debug-db.sh` -> Delete local Desktop debug database and prefs
-- `./gradlew --quiet --console=plain :shared:compileKotlinJvm` -> Quick compile check for shared module only (fastest iteration)
-- `./gradlew --quiet --console=plain :feedSync:feedbin:build` -> Build a specific feedSync sub-module (pattern: `:feedSync:<module>:build`)
-- `./gradlew --quiet --console=plain :desktopApp:packageDistributionForCurrentOS` -> Package desktop app distribution for the current OS
+- `./gradlew :shared:jvmTest` — shared tests, fastest loop
+- `./gradlew :shared:compileKotlinJvm` — quick compile check of shared code
+- `./gradlew :androidApp:assembleDebug` — Android debug APK
+- `./gradlew detekt` — static analysis
+- `.scripts/refresh-translations.sh` — regenerate Kotlin after editing strings
+- `iosApp/.scripts/generate-project.sh` — regenerate the Xcode project after changing `project.yml` or adding Swift files
+- `xcodebuild -project iosApp/Around.xcodeproj -scheme Around -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build -quiet`
 
-### Android baseline profiles
-
-The committed profiles in `androidApp/src/main/generated/baselineProfiles/` (`baseline-prof.txt`, `startup-prof.txt`) are generated by the `:benchmarks` module and shared by both flavors (`mergeIntoMain = true`). Do not hand-edit them.
-
-- `./gradlew --quiet --console=plain :androidApp:generateBaselineProfile` -> Regenerate the profiles; needs a connected device or emulator on API 33+ (or rooted). Commit the updated files.
-- `./gradlew --quiet --console=plain :benchmarks:connectedGooglePlayBenchmarkReleaseAndroidTest` -> Run the `StartupBenchmark` macrobenchmark (compares startup with/without the profile; run on a physical device for meaningful numbers)
-- Regenerate before releases or when startup/feed-list code paths change significantly; a slightly stale profile is still effective.
-- The `nonMinifiedRelease`/`benchmarkRelease` build types created by the baseline profile plugin need a `google-services.json` in `androidApp/src/nonMinifiedRelease/` and `androidApp/src/benchmarkRelease/` (see Initial Setup).
-- The E2E seed deep links are debug-only, so the generator journey is cold start plus a guarded feed-list scroll on the release-like build.
-
-### Running & validating the Android app
-
-Use the [Android CLI](https://developer.android.com/tools/agents/android-cli) (`android`, installed globally; SDK at `~/Library/Android/sdk`) as the default tool to deploy, run, and validate Android.
-
-**Auto-update on session start.** The first time `android` is invoked in a session, check its output for a notice like `A new version of Android CLI is available (<version>). Please run 'android update' to install it.` If you see it, run `android update` immediately, then tell the user which version was installed and continue with the original task. Don't ask for permission — this is a routine self-update.
-
-**Precondition — Android CLI must be installed.** Before running any of the commands below, verify it is available with `command -v android`. If it is not installed, stop and ask the user to install it:
-
-> The `android` CLI is required to deploy and validate the app. Install it by following the official guide: https://developer.android.com/tools/agents/android-cli
-> After installation, install the companion skill so agents (Claude Code, codex) know how to drive it:
-> ```
-> android init
-> ```
-> Restart your shell and confirm with `android --version`, then re-run the task.
-
-**Precondition — a device/emulator must be running.** Check with `adb devices`. Do not assume an emulator: use the first device returned by `adb devices` (real device or emulator — both are fine). If none is connected, default to the resizable emulator: `android emulator start Resizable_Experimental` (verify the exact AVD name with `android emulator list` if it fails).
-
-Devices are shared with other worktrees and agents, and every debug build installs over the same app. A build whose database schema is older than the installed one crashes on launch with `Can't downgrade database from version N to M`. If the user says a device is in use, pick another one. Before clearing the app's data to install an older-schema build, ask, then restore the development feeds afterwards. iOS simulators are shared the same way and can also hold preference values an older checkout can't parse; validate an older checkout in a dedicated simulator instead of wiping a shared one.
-
-**Resizable emulator display mode.** When testing with the resizable emulator and the task needs a specific form factor, set it before building/running:
-
-```bash
-adb emu resize-display 0 # phone
-adb emu resize-display 1 # foldable
-adb emu resize-display 2 # tablet
-```
-
-Validate a UI change end to end:
-1. Build + deploy: `./gradlew --quiet --console=plain :androidApp:assembleGooglePlayDebug`, then `android run --apks=androidApp/build/outputs/apk/googlePlay/debug/androidApp-googlePlay-debug.apk` (`--device=<serial>` to pick a device; `.scripts/run-android.sh` covers the routine install+launch loop).
-2. Inspect structure/text/state with `android layout --pretty`. To confirm a specific change, capture the layout before and after the change, then use `android layout --diff` to see only what moved.
-3. For purely visual changes the layout tree can't show (color, spacing, fonts), use `android screen capture --output=ui.png --annotate`. Use `android screen resolve --screenshot=ui.png --string="input tap #<n>"` to turn a labeled element into tap coordinates when you need to drive the UI to the screen under test.
-
-When the user asks to deploy "with my usual feeds" (or "classic set of feeds"), install the build and then run `feedflow-restore-dev-feeds --platform android` (or `--platform ios`). It loads the development subscriptions, categories included, through the debug seeder; `.scripts/add-android-feed.sh` is only for adding individual URLs.
-
-For Android API/library questions, `android docs search '<query>'` before falling back to web search.
-
-For anything deeper — SDK package management (`android sdk ...`), device interaction, or journey/UI tests — consult the globally-installed `android-cli` skill instead of expanding this section.
-
-### Running & validating the Desktop app
-
-When you need to run the Desktop app for testing, UI iteration, or user-visible validation, drive it through the Compose Hot Reload MCP server configured in `.mcp.json`. The agent harness already starts that server (`:desktopApp:hotMcpServerJvm`); it only attaches to an app launched with hot reload, so start the app yourself, in the background:
-
-```bash
-./gradlew --quiet --console=plain :desktopApp:hotRunJvm
-```
-
-Do not start `hotMcpServerJvm` by hand: it launches no app, and the MCP `status` stays `connected: false`. Once the app writes `desktopApp/build/run/jvmMain/jvmMain.pid`, `status` reports `connected: true`.
-
-Use the Gradle daemon for manual local runs so repeated desktop iterations stay fast. The checked-in `.mcp.json` may still pass `--no-daemon` because JetBrains' AI-agent example does that for MCP client-managed server processes.
-
-Use the MCP tools when you need to interact with the running Desktop app: check status, reload code changes, list windows, inspect the semantic tree, click/type/scroll, or resize windows. Its `take_screenshot` grabs the screen area under the window, so other windows on top show up in it. The MCP server is experimental in Compose Hot Reload; if it is unavailable or not connected, fall back to `./gradlew --quiet --console=plain desktopApp:run` and note the limitation in handoff. Dialog windows (Add feed, Settings, Feed suggestions) are not registered with the MCP: Compose Hot Reload skips a dialog's entry point as nested in the main window's, so `list_windows` shows only the main window.
-
-For dialogs, use `.scripts/desktop-ax.sh`, which reads and presses elements of any app window through macOS Accessibility, in the background and without a computer-use grant: `.scripts/desktop-ax.sh dump "Add feed"` lists the elements, and `.scripts/desktop-ax.sh press "Add feed" AXButton:Cancel` presses one (the optional `AXRole:` prefix picks among same-named elements). It cannot type: Compose ignores Accessibility value writes and drops key events sent to a background window, so a flow that needs text in a dialog field still needs the user.
-
-For visual proof, record the window with sigillum while driving it: `sigillum record start desktop --window-title FeedFlow` (or the dialog's title), act, then `sigillum record stop desktop`. It captures the window itself even when it is covered, and needs no computer-use grant. Don't request computer-use access to drive the app.
-
-Desktop compiles, tests and packages with JBR 25; Gradle and shared/mobile toolchains remain on Java 21. Desktop controls use Jewel, with Material icon vectors allowed; shared/core remain independent of platform UI. See `docs/DESKTOP_UI.md`.
-
-### Local Klead development
-
-Klead resolves from Maven Central by default. Its composite-build substitution in `settings.gradle.kts` is deliberately commented out; only enable it for explicit local Klead work, using `-Pfeedflow.kleadPath=<checkout>` (default: `../../klead`), and do not commit that local substitution.
-
-### Maestro E2E tests
-
-When writing or running Maestro E2E tests, follow `e2e/maestro/maestro-e2e-guide.md`.
-The full catalog of existing flows lives in `e2e/maestro/maestro-e2e-tests.md`; do not mark a test done until the required Maestro flow passes.
-When changing a user-visible feature, add or update Maestro coverage if the behavior can be exercised with existing app UI, debug seed deep links, fixtures, or test tooling without adding production-only code paths. If Maestro coverage is not feasible, document the limitation in `e2e/maestro/maestro-e2e-tests.md`.
-
-Quick local smoke checks:
-- `e2e/scripts/run-android-smoke.sh`
-- `e2e/scripts/run-ios-smoke.sh`
-
-Full automated E2E checks before release:
-- `e2e/scripts/run-android.sh`
-- `e2e/scripts/run-ios.sh`
-
-When the user asks for the full Maestro release gate or a failure summary, use the repo-local `run-maestro-release-tests` skill. Its runner builds/installs both platforms, runs smoke + regression flows, continues after failures, and writes `report.html`, `report.md`, and logs under `.tmp/maestro-release-tests/<timestamp>/`.
-Each Maestro flow has a three-minute limit and the runner retries only driver/transport failures (up to three attempts). Treat a timeout or device-server failure as infrastructure first; inspect the archived per-attempt logs before changing app code.
-
-After any local Maestro run, restore the development subscriptions before handoff with `feedflow-restore-dev-feeds --platform android` or `--platform ios`. The all-platform wrapper and release runner do this automatically when the command is installed; run it explicitly after a single flow or a failed run.
-
-Use the debug seeding deep links documented in that guide. Do not depend on live feeds, OAuth, or previous app state in smoke or regression flows.
-
-### iOS Project Generation
-
-The iOS Xcode project (`iosApp/FeedFlow.xcodeproj`) is generated from `iosApp/project.yml` by [XcodeGen](https://github.com/yonaskolb/XcodeGen) and is NOT committed to git. Regenerate it with:
-
-```bash
-cd iosApp && ./.scripts/generate-project.sh
-```
-
-This requires XcodeGen installed (`brew install xcodegen`, or `mint bootstrap` using `iosApp/Mintfile` which pins the version). Regenerate whenever `project.yml`, iOS source folder structure, xcconfigs, entitlements, or SPM dependencies change. The wrapper script also creates `Assets/Config-Debug.xcconfig` from the tracked template when it is missing, post-fixes `lastKnownFileType` for iOS 26 `.icon` bundles, and injects `wasCreatedForAppExtension="YES"` into the Widget/Share extension schemes (XcodeGen drops this when the scheme also launches the host app — yonaskolb/XcodeGen#1523). SPM pins are managed via `exactVersion:` entries in `project.yml`; no `Package.resolved` is tracked.
-
-### Building for iOS Simulator
-
-- If using XcodeBuildMCP, use the installed XcodeBuildMCP skill before calling XcodeBuildMCP tools.
-- The xcodeproj must exist locally and match the checkout. Run `cd iosApp && ./.scripts/generate-project.sh` before building after a pull or branch switch: a project generated from an older checkout misses newly added Swift files and fails to compile.
-- Under Xcode 27.1, XcodeBuildMCP `snapshot_ui` and `axe` HID taps fail silently (SimulatorKit moved to `Contents/SharedFrameworks`). `axe describe-ui` still reads the UI tree; drive input through Maestro instead.
-- XcodeBuildMCP has repo-local defaults in `.xcodebuildmcp/config.yaml`; prefer the current CLI shape:
-
-```bash
-xcodebuildmcp simulator build
-```
-
-To build and launch in one step:
-```bash
-xcodebuildmcp simulator build-and-run
-```
-
-If the MCP server is registered in the current agent session, use the equivalent `simulator/build` or `simulator/build-and-run` tool; do not use the old `build_sim_name_proj` tool name.
-Do not set `derivedDataPath` in `.xcodebuildmcp/config.yaml` by default. Leaving it unset lets XcodeBuildMCP use its external per-workspace DerivedData path, which avoids branch-local artifacts and avoids sharing mutable Xcode build products across concurrent worktrees. Set it only for a temporary cache investigation or an explicit reproducibility test.
-
-
-### Running Specific Tests
-- `./gradlew --quiet --console=plain :shared:allTests` -> Run all shared module tests across supported targets
-- `./gradlew --quiet --console=plain :shared:jvmTest --tests "com.prof18.feedflow.shared.presentation.SomeTest"` -> Run a specific test class on JVM
-- `./gradlew --quiet --console=plain :shared:iosSimulatorArm64Test` -> Run shared tests on iOS simulator
-- `xcodebuild -project iosApp/FeedFlow.xcodeproj -scheme WidgetTests -destination 'platform=iOS Simulator,name=iPhone 18 Pro' test -quiet` -> Run one Swift test target (each has a scheme of its own)
-
-### Build Verification Process
-
-After editing code, build the platform you changed (only that one, to save time) and fix compilation errors before moving on.
-
-## Handing off
-
-Before handing off you must:
-1. Run `.scripts/refresh-translations.sh` before the Gradle checks if you changed translation resources
-2. Run `./gradlew --quiet --console=plain detekt allTests` to ensure Kotlin/shared/Android/Desktop checks pass - don't run it if you modified only swift files
-3. Run `.scripts/ios-format.sh` to format iOS code - only run if you made changes on the iOS app
-4. If you changed iOS code, run `xcodebuild -project iosApp/FeedFlow.xcodeproj -scheme FeedFlow -destination 'platform=iOS Simulator,name=iPhone 18 Pro' build -quiet` before handoff; rerun without `-quiet` only if you need the full diagnostics
-5. If you changed iOS code, run `.scripts/ios-tests.sh`
-6. If you changed user-visible behaviour, check whether a website FAQ answer needs updating or a new entry is warranted (see "Website FAQ")
-7. Fix any issues found during the above steps
-
-### Initial Setup (for building from scratch)
-```bash
-# Android: Copy dummy google-services.json
-cp config/dummy-google-services.json androidApp/src/debug/google-services.json
-cp config/dummy-google-services.json androidApp/src/release/google-services.json
-
-# Android: baseline profile build types also need it (profile generation/benchmarks)
-mkdir -p androidApp/src/nonMinifiedRelease androidApp/src/benchmarkRelease
-cp config/dummy-google-services.json androidApp/src/nonMinifiedRelease/google-services.json
-cp config/dummy-google-services.json androidApp/src/benchmarkRelease/google-services.json
-
-# iOS: Copy dummy GoogleService-Info.plist
-cp config/dummy-google-service.plist iosApp/GoogleService-Info-dev.plist
-cp config/dummy-google-service.plist iosApp/GoogleService-Info.plist
-
-# iOS: Create Config.xcconfig
-cp iosApp/Assets/Config.xcconfig.template iosApp/Assets/Config.xcconfig
-```
-
-For compile-only local/CI iOS builds without real sync credentials, you can use `cp config/dummy-config.xcconfig iosApp/Assets/Config.xcconfig` instead.
-
-A fresh git worktree has none of these gitignored files. Before the first build or gate run there, copy `local.properties`, the `google-services.json` files, both `GoogleService-Info*.plist` files and `iosApp/Assets/Config.xcconfig` from the main checkout, or create them with the commands above. Without the iOS files, `allTests` fails in `generate-project.sh`'s XcodeGen spec validation. Don't copy `keystore.properties`: its RevenueCat key makes the Robolectric tests fail.
-
-To read the live Google Play listing locally, run `gplay metadata pull --package com.prof18.feedflow --dir "$(mktemp -d)"` (PollyGlot/google-play-cli; the service account is in the macOS Keychain and no key file is kept on disk). CI still publishes through Gradle Play Publisher with the `PLAY_CONFIG` secret. Run `FEEDFLOW_PLAY_CONFIG_JSON=/path/to/play_config.json ./gradlew --quiet --console=plain :androidApp:bootstrapGooglePlayReleaseListing` only when you deliberately want to overwrite `androidApp/src/googlePlay/play/` from the live store: it resets that directory, including tracked graphics and release notes. Do not assume an uncommitted repo-root `play_config.json` exists in automation worktrees.
+KMP modules build `iosX64` as well as the arm64 targets: the simulator on Intel Macs needs it. Keep
+dependencies of `shared` on versions that still publish `iosX64` (this is why the shared ViewModel
+library is pinned to lifecycle 2.10.0).
 
 ## Adding a feature
 
-Generic patterns (Screen/ScreenContent split, ViewModel shape, events, SwiftUI flow observation) are in the global `kmp-feature-development` skill. This section has the FeedFlow wiring.
+- ViewModel in `shared/src/commonMain/kotlin/events/around/shared/presentation/<feature>/`, registered
+  in `shared/.../di/Koin.kt`. Expose a `StateFlow<…UiState>`; UI state classes sit at the bottom of the file.
+- iOS access: add `fun getXxxViewModel()` to `object Deps` in `shared/src/iosMain/.../di/Deps.kt`.
+  Hold it with `@StateObject VMStoreOwner<XxxViewModel>(…)` and read state with `for await` in `.task`.
+- Android: screen under `androidApp/src/main/kotlin/events/around/android/<feature>/`, route in
+  `Routes.kt`, `entry<Route>` in `MainActivity`.
+- Strings: never hardcode user-visible text. Add the key to all four `strings.xml` files.
+  Compose: `LocalAroundStrings.current`; SwiftUI: `@Environment(\.strings)`.
+- Network: use the Koin `HttpClient`; it adds the base URL and the `Authorization` header from
+  `AuthorizationProvider`. JSON uses `apiJson` (unknown keys ignored).
+- Business logic in `shared` gets unit tests in `commonTest` (Turbine for flows, fakes over mocks,
+  `MapSettings` for preferences, Ktor `MockEngine` for HTTP).
 
-- **ViewModel:** `shared/src/commonMain/kotlin/com/prof18/feedflow/shared/presentation/`. Register it with `viewModel { }` in `shared/src/commonMain/.../shared/di/Koin.kt` (iOS-only ViewModels go in `shared/src/iosMain/.../shared/di/KoinIOS.kt`).
-- **iOS access:** add `fun getXxxViewModel()` to `object Deps` in `shared/src/iosMain/.../shared/di/KoinIOS.kt`.
-- **Compose UI:** there is no shared UI module; Android and Desktop each own their UI. Android `XxxScreenContent` goes in the feature package under `androidApp/src/main/kotlin/com/prof18/feedflow/android/<feature>/`; Desktop Jewel UI goes under `desktopApp/.../desktop/<feature>/` (see `docs/DESKTOP_UI.md`). Android previews reuse `androidApp/.../android/ui/preview/PreviewItems.kt` and the `@PreviewPhone`/`@PreviewFoldable`/`@PreviewTablet` annotations in `androidApp/.../android/ui/preview/FeedFlowPreview.kt`.
-- **Android:** wrapper `androidApp/.../android/<feature>/XxxScreen.android.kt`, route (`@Serializable ... : NavKey`) in `androidApp/.../android/Screen.kt`, `entry<Route>` in `MainActivity.FeedFlowNavigation()`. Go back with `popBackStackOrFinish(backStack)` (the `navigateBack` lambda).
-- **Desktop:** wrapper `desktopApp/.../desktop/<feature>/XxxScreen.desktop.kt`. In-window pages get a `NavKey` in `desktopApp/.../desktop/Screen.kt` and an `entry<Route>` in `screens()` in `desktop/main/MainWindow.kt`. Preferences go in the Settings window and other detail pages are dialog windows instead (see "Desktop screens/windows").
-- **ViewModel scope:** no Navigation 3 ViewModel entry decorator is installed, so `koinViewModel()` inside an entry is scoped to the Activity/window. The ViewModel outlives the screen and is reused next time; reset per-screen state explicitly (as `SearchScreen` does with `resetSearch()`).
-- **iOS:** `iosApp/Source/<Feature>/XxxScreen.swift` + `XxxScreenContent.swift`. Add a case to `CommonViewRoute` (`iosApp/Source/App/Model/CommonViewRoute.swift`) and handle it in the `.navigationDestination(for: CommonViewRoute.self)` of `RegularView.swift`, the single root layout for iPhone, iPad and iPhone Duo. Navigate with `appState.navigate(route:)`. Enqueue errors in `appState.snackbarQueue`. The scene presents them above navigation. Apply `.snackbarPresentationSurface()` once at the content root of each app-owned sheet or cover so it can display the scene's banner.
-- **Strings:** `LocalFeedFlowStrings.current` in Compose, `feedFlowStrings` in Swift.
-- **No SwiftUI previews:** the Kotlin framework can't load in Xcode previews.
+## Rules
 
-## Testing
-
-Project documentation lives in **`docs/`**; start with [the documentation index](docs/README.md). Keep agent skills in `.ai/skills/`.
-
-When writing tests, follow the comprehensive testing guide at **`docs/TESTING.md`**.
-
-Key points:
-- All tests extend `KoinTestBase` for dependency injection
-- Use Turbine for Flow testing
-- Prefer fakes over mocking libraries
-- Use data generators from `shared/src/commonTest/.../test/generators/`
-- For sync service tests, use the `feedSync/test-utils` module (provides mock HTTP engines and Koin modules for GReader/Feedbin)
-- Run specific test classes with `--tests "fully.qualified.ClassName"` to iterate quickly
-
-For Sentry crash notes, Sentry issue URLs, or event IDs, use the repo-local `sentry-note-crash-fix` skill. Confirm the live Sentry event when possible, identify the first relevant first-party frame, inspect dependency versions and affected platform code, then validate the narrow fix with the affected platform build before the full gate.
-
-For Miniflux/GReader sync failures, compare FeedFlow's exact requests and headers against the upstream service behavior before changing protocol logic. Miniflux bad sync tokens are detected from the `X-Reader-Google-Bad-Token` header and mapped to `FeedSyncError.GReaderBadToken` (`FS11`); cover changes with `feedSync/test-utils` mocks.
-
-## General rules:
-
-- For cloud-backup sync, follow `docs/CLOUD_SYNC_TESTING.md`; the deterministic harness runs through `allTests`. For live provider checks or adding a provider, use `.ai/skills/validate-cloud-sync/SKILL.md` and `docs/CLOUD_SYNC_LIVE_TESTING.md`. The optional physical-iPhone controller in `tools/cloud-sync-live/` does not replace that Gradle gate.
-
-- Write comments only where the code is not self-explanatory, not on every function or class.
-- If you touch or create any business logic, ensure it's thoroughly tested with unit tests.
-- Put try/catch only at the top caller or the bottom callers, not around every function.
-- Run Gradle tasks with `--quiet --console=plain`.
-- Prefer keeping data classes and other simple model types at the bottom of a file, or in a dedicated model file when they are shared by multiple classes.
-- Android app modules use AGP 9's built-in Kotlin support; do not re-add `org.jetbrains.kotlin.android`. Android and Desktop app version values come from the `com.feedflow.versioning` convention plugin, not `versioning.gradle.kts`.
-- Detekt is on Detekt 2 (`dev.detekt`, ktlint via `detekt-rules-ktlint-wrapper`). Bump `io.nlopez.compose.rules:detekt` only to a release whose dependency matrix matches the repo's Detekt and Kotlin versions. `config/detekt/detekt.yml` holds only overrides on top of the defaults (`buildUponDefaultConfig`); add a rule there only to change it.
-- `detekt` also runs the type-resolved tasks (`detektMainJvm` in KMP modules, `detektGooglePlayDebug`/`detektFdroidDebug` in `androidApp`), which compile the code first; rules such as compose-rules' `UnnecessaryLaunchedEffect` and `MissingReadOnlyComposable` only run there. For a quick source-only pass use a light task like `:shared:detektCommonMainSourceSet`. Generated sources under `build/` are excluded. "Compiler errors found during analysis" on KMP modules comes from Detekt flattening expect/actual into one module; `-Pfeedflow.detektDebug=true` prints them.
-- `UnnecessaryLaunchedEffect`: use a keyed `SideEffect(key) { }` for effects that only make synchronous calls; keep `LaunchedEffect` for suspending work and for `FocusRequester.requestFocus` (allowed in the config).
-- Detekt's `MagicNumber` rule has `ignoreNamedArgument: true`, so don't extract a literal into a private constant when it is passed as a named argument (e.g. `Modifier.widthIn(max = 180.dp)`, `shadowElevation = 3.dp`, `.copy(alpha = 0.8f)`) — inline it. Only extract a named constant when the literal is a positional argument that Detekt would flag (e.g. `.zIndex(0.5f)`, `.height(28.dp)`); values in `ignoreNumbers` (`-1, 0, 1, 2`) never need one.
-- Every Android Material `DropdownMenu` must pass `shape = MaterialTheme.shapes.large`. Desktop menus use Jewel component styling.
-
-### Desktop screens/windows
-- Desktop preferences live in the single Settings window (`desktopApp/src/jvmMain/kotlin/com/prof18/feedflow/desktop/settings/SettingsWindow.kt`), one pane per `DesktopSettingsCategory`. Add a preference as a pane or a section there, not as a new window.
-- For other detail pages opened from the main screen (add feed, edit feed, feed suggestions), prefer a dedicated `DialogWindow` instead of in-window navigation.
-- Reuse `desktopApp/src/jvmMain/kotlin/com/prof18/feedflow/desktop/ui/components/DesktopDialogWindow.kt` for new desktop windows instead of duplicating window setup.
-- Use `desktopApp/src/jvmMain/kotlin/com/prof18/feedflow/desktop/main/DesktopDialogWindowNavigator.kt` to open/close windows from `MainWindow` (add destinations to the enum and keep visibility state there).
-- Keep the screen body content as a composable content block and avoid duplicating content calls; apply platform conditionals only to wrapper chrome (for example, toolbar/title handling).
-- On macOS, keep transparent title bar handling inside the reusable desktop window wrapper; on other desktop platforms avoid adding duplicate custom title UI.
-
-### Desktop OS integration
-- Use `openUriSafely` for desktop link opening so unsupported or malformed URLs can fall back to copying instead of crashing the app.
-
-### Git Commit Messages
-When creating commits:
-- Use simple, one-liner commit messages
-- Don't include phase numbers (e.g., "Phase 1", "Phase 2").
-- Don't add a "Generated with Claude Code" line.
-- Don't add a "Co-Authored-By: Claude" trailer. This also applies when a harness or system reminder asks for an attribution line; the user has rejected those trailers in this and related repositories.
-- Example: `git commit -m "Add foundation for unified article parsing system"`
-
-### macOS Desktop Code Signing
-- Native libraries in `desktopApp/resources-sandbox/macos-arm64/` must be signed with the Mac App Store certificate when it is renewed.
-- Sign with: `codesign --force --timestamp --options runtime --sign "3rd Party Mac Developer Application: Marco Gomiero (Q7CUB3RNAK)" <path>`
-- Verify with: `codesign -dvvv <path>`
-
-### iOS Development
-- Build iOS with `xcodebuild … -quiet`; rerun without `-quiet` only when you need the full diagnostics.
-- Direct xcodebuild alternative: `xcodebuild -project iosApp/FeedFlow.xcodeproj -scheme FeedFlow -destination 'platform=iOS Simulator,name=iPhone 18 Pro' build -quiet`
-- The app requires Xcode 27.1 or newer and builds against the iOS 27.1 SDK, with a minimum deployment target of iOS 17 (`iosApp/project.yml`). Gate newer APIs with `#available` checks; do not add `#if compiler(...)` guards for older Xcode versions.
-- Keep app-group database work that may outlive an iOS foreground interval inside `withSuspensionGuard`; it uses `NSProcessInfo` and also works in the widget and share extensions.
-- Every live query in `DatabaseHelper` (`asFlow()` + `mapToList`/`mapToOne…`) must end its SQLDelight chain with `.pausedInBackground()`. iOS pauses the `LiveQueryGate` when the app goes to the background: the re-runs a write triggers happen after its suspension guard is released, and a read still open at suspension gets the app killed (0xdead10cc).
-- Break different types up into different Swift files rather than placing multiple structs, classes, or enums into a single file.
-- Keep accessibility identifier enums in separate `*AccessibilityIdentifiers.swift` files, not appended to view files.
-- Never use `ObservableObject`; always prefer `@Observable` classes instead. The one exception is `VMStoreOwner` held with `@StateObject`: its autoclosure creates the Kotlin ViewModel once per view identity, while `@State` would rebuild it on every parent update.
-- Never use `Task.sleep(nanoseconds:)`; always use `Task.sleep(for:)` instead.
-- Avoid `AnyView` unless it is absolutely required.
-- Avoid force unwraps and force `try` unless it is unrecoverable.
-- For SwiftUI screens that use `BrowserSelector`, pass the same environment instance into nested `NavigationLink` destinations and sheets so link-opening and reader-mode settings do not reset while navigating.
-- In the SwiftUI feed list, keep row callbacks narrowly captured and put `.refreshable` at the screen boundary; broad environment captures or nested refresh wrappers can invalidate every visible row while scrolling. Validate changes with a warmed-up Instruments capture on a physical iPad as described in `e2e/maestro/maestro-e2e-tests.md`.
-
-### Reader mode
-- Klead is the sole reader-content engine on Android, Desktop, and iOS; keep parsing in the shared pipeline rather than adding a platform HTML parser. Shared HTML parsing uses `KsoupHtmlParser`.
-- Use `ReaderModeEligibility.canOpenReaderMode` / `FeedItemUrlInfo.canOpenWebReaderMode()` as the shared gate before opening reader mode on Android, Desktop, and iOS. Ineligible links such as blank, non-http(s), media/PDF/download URLs, YouTube, and Telegram should fall back to the configured browser or `ContentNotAvailable` behavior instead of attempting reader parsing.
-- URL-less items are a separate case: they are never web-reader eligible, but they still open in the reader from their feed content. Check `FeedItemUrlInfo.hasNoUrl()` first (it must bypass the whole `linkOpeningPreference` branch, since there is no URL any browser could open).
-
-### HTTP clients
-- Every Ktor client that can reach the Darwin engine must install `rejectUnsafeHosts()` after its plugins are configured. Its `HttpSend` interceptor validates every request and redirect hop, preventing malformed percent escapes or bare colons in hosts from terminating iOS.
-
-### Timeline pagination
-- The feed list pages with a keyset cursor on `(pub_date, url_hash)`, never `LIMIT`/`OFFSET`: the timeline filters on `is_read` while mark-as-read-on-scroll mutates it mid-scroll, so a positional offset skips articles (issue #1319). Read **`docs/PAGINATION.md`** before changing `selectFeeds` in `FeedItem.sq` or the cursor handling in `FeedStateRepository`.
-- The cursor predicate must mirror the query's `ORDER BY` exactly, including SQLite NULL placement for nullable `pub_date`; invalidate the cursor only after a query succeeds.
-
-### Internationalization
-- Translations come from Weblate (project `feedflow`). Weblate tracks `main` through its GitHub App and delivers translations as one pull request it keeps updated and auto-merges with rebase; there is no `localization` branch. Every component is linked to `app-strings`, which owns the repository settings.
-- Each website FAQ entry is its own Weblate component, created by the Component discovery add-on on `app-strings` from `website/content/en/faq/NN-*.md`. Renaming an English FAQ file replaces its component. A language only gets a published FAQ if it is listed in `website/config.toml`.
-- String resources are located in `i18n/src/commonMain/resources/locale/values-[language]/`
-- Run .scripts/refresh-translations.sh after adding a new translation, to re-generate the kotlin code
-- Enabling a new app language takes more than the `values-[language]/` folder. Register it in the `feedFlowStrings` map in `i18n/src/commonMain/kotlin/com/prof18/feedflow/i18n/Locales.kt`, `CFBundleLocalizations` in `iosApp/Info.plist`, `knownRegions` in `iosApp/project.yml`, the macOS localizations in `desktopApp/build.gradle.kts` (`macExtraPlistKeys`), the Windows package languages in `.github/msix-resources-template.xml`, and `FeedFlowStringsLookupTest`. The MSIX list is the one most easily forgotten.
-- Store screenshots for **all** platforms (Android phone/tablet, iPhone, iPad, macOS, Windows) are rendered from repo code by `tools/screenshots/` (`node render.mjs --all`, then `node verify.mjs`), not Figma. Use the repo-local `render-store-screenshots` skill when translations change; it enforces the spacing/padding floors.
-- Use the repo-local `translation-release-audit` skill for weekly or release checks of app translations, store copy, generated Play listing files, live store metadata, and screenshot copy/assets. Do not upload store metadata/screenshots unless the user explicitly asks.
-- Don't hardcode user-visible strings; put them in the i18n resources.
-- Use the terms in `docs/GLOSSARY.md` (feeds, offline copy, Back up now, Uncategorized…). The term list itself is the Weblate glossary, mirrored in `i18n/glossary/*.tbx`.
-- Add only the English strings and don't translate other languages yourself: professional translators handle them later.
-- Write English UI copy without a first-person "we": address the user or describe the state ("Couldn't connect to iCloud", not "We are unable to connect"). Match the tone of the existing strings.
-
-### Website FAQ
-- The FAQ lives in `website/content/en/faq/`, one Markdown file per question, ordered by `weight` (filename number × 10); `featured: true` puts a question in the homepage "Common questions" section. The apps' FAQ entry opens it through `Websites.faqUrl`.
-- When a change alters something an answer describes, update that answer in the same change: setting names or locations, defaults, refresh/background sync, notifications, sync providers and per-build availability (F-Droid, Flathub), reader and link-opening options, import/export, error codes in `ErrorCode.kt`, platforms and minimum OS versions. Remove statements that stop being true.
-- When a new user-visible feature or behaviour is likely to raise questions (non-obvious defaults, platform differences, limits, something users can't find), add an entry or extend the closest one. Ask the user if unsure whether it belongs in the FAQ.
-- Write answers like the UI copy: plain English, no "we", settings as **Settings → Section → Option** with the exact English string names. Don't mention pricing, tips or analytics. Add only the English files; translations go in `content/<lang>/faq/` with the same filename and fall back to English per entry.
-
-### Flatpak / Linux Desktop
-- `.scripts/flatpak-build-setup.sh` -> Prepare the project for Flatpak builds (sets release props, disables JetBrains JDK vendor, disables toolchain auto-provisioning, comments out Android-only Gradle plugins)
-- `.scripts/disable-android-for-flatpak.sh` -> Comments out all Android-related Gradle config across all `build.gradle.kts` and build-logic files; excludes `androidApp` from `settings.gradle.kts`
-- `desktopApp/packaging/flatpak/` holds the launch script, desktop entry, AppStream metadata and icons. The Flatpak manifest and the `flatpak-sources*.json` files live in the Flathub packaging repo (`flathub/com.prof18.feedflow`); to regenerate or verify them, use the `verify-flatpak` skill.
-- The `flatpak=true` property in `desktopApp/src/jvmMain/resources/props.properties` is used to disable platform-specific features (e.g., Google Drive sync) in Flatpak builds
-- HiDPI scaling for the JVM uses `sun.java2d.uiScale` JVM argument. For local testing: `./gradlew --quiet --console=plain desktopApp:run -PjvmArgs="-Dsun.java2d.uiScale=2.0"`
-
-### CI/CD
-- CI config: `.github/workflows/code-checks.yaml`
-- Pipeline: every job starts in parallel. `checks` (macos-26) runs swiftlint, `allTests` without the JVM/Android suites (Kotlin/Native, cloud sync, Swift `CloudSyncTests`), `.scripts/ios-tests.sh` and the macOS desktop tests; `jvm-checks` (Linux) runs detekt and the Android host/unit tests; `tests-desktop` runs `jvmTest` on Linux and Windows; `build-android-app`, `build-desktop-app` and `build-ios-app` build the apps. PR runs cancel when a newer push arrives. macOS runners are the scarce, slow resource (7 GB RAM, few concurrent slots), so keep work that does not need macOS off the `checks` job. The iOS build job and the iOS release job run on GitHub's `xcode-27` runner (a preview image) and select Xcode 27.1 with `maxim-lobanov/setup-xcode`: the iPhone Duo layout uses iOS 27.1 SDK APIs, so Xcode 27.0 cannot build the app.
-- iOS CI build forces arm64 simulator architecture: `xcodebuild -project iosApp/FeedFlow.xcodeproj -configuration Debug -scheme FeedFlow -sdk iphonesimulator -destination "generic/platform=iOS Simulator" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build | xcbeautify --renderer github-actions`
-- The `checks` job runs `.scripts/ios-tests.sh` after `allTests`. The Swift `CloudSyncTests` run inside `allTests` instead, because they read snapshots the Kotlin cloud-sync tests write first; the other Swift test targets need nothing from Gradle beyond the FeedFlowKit framework, so they are not bound to it. Both runs share `build/ios-test-derived-data` and the same xcodebuild settings so the Swift packages compile once; keep the settings in `SwiftCloudSyncTest` and `ios-tests.sh` identical. CI boots the simulator (`.scripts/ios-test-simulator.sh`) at the start of the job so it is ready by the time the tests run. Add a new Swift test target to the `iOSTests` scheme in `iosApp/project.yml`, or CI won't run it.
-- CI runs `.scripts/refresh-translations.sh` before checks; do this locally before pushing if translations changed
-- Debugging CI failures: `gh run list --limit=10`, then `gh run view <run-id> --log`
-- Red CI recovery loop: `gh run rerun <run-id>` (or `gh run rerun <run-id> --failed`), then fix and push until green
-
-### Microsoft Store (`pcenter`)
-
-The Store is driven by [`pcenter`](https://github.com/prof18/pcenter-cli), which replaced the
-PowerShell scripts in `.github/scripts/`. Locally: `brew install prof18/tap/pcenter`. In CI it
-runs in `windows-release.yml`'s `publish-store` job — a separate Linux job that takes the MSIX
-from the Windows build artifact, so a publish that fails on its own terms is re-runnable in a
-minute instead of rebuilding the package for an hour. Bump `PCENTER_VERSION` in its "Install
-pcenter" step to move the pinned version.
-
-- Reading changes nothing and is the place to start: `pcenter listing show`,
-  `pcenter submission status`, `pcenter rollout status`, `pcenter locales list`.
-- Credentials: `~/.config/pcenter/credentials.env` locally (`pcenter auth login`), `MS_STORE_*`
-  from repository secrets in CI. Never commit them.
-- `assets/storecopy/<locale>/` is the source of truth for listing copy. `.pcenter/` is a
-  gitignored scratch snapshot — never commit it, never hand-edit it.
-- **Never `pcenter listing push --yes` or `submission commit` unless the user explicitly asks.**
-  `--dry-run` first, always.
-
-The MSIX itself is built by `.scripts/package-msix.ps1`, which packs the jpackage app image
-(`createReleaseDistributable`) with `makeappx` against `.github/msix-manifest-template.xml`.
-Do not reintroduce the MSIX Packaging Tool / MSI-conversion route: it needs the
-`Msix.PackagingTool.Driver` FOD, which cannot be installed on the hosted Windows image,
-and the tool's own DISM call times out after 10 minutes with no way to extend it.
-Package languages still come from `.github/msix-resources-template.xml`. `Identity/Name` and
-`Identity/Publisher` in the manifest must match Partner Center or the upload is rejected.
-
-To test that package locally, `.scripts/install-msix-dev.ps1` unpacks it, rewrites the identity
-to `MarcoGomiero.FeedFlowRSSReaderDev` and the display name to "FeedFlow (Dev)", and registers
-it. The rename matters: registering under the shipping identity makes Windows treat the build
-as an update to an installed Store FeedFlow and replace it. Needs Developer Mode, no signing.
-It registers loose files out of `desktopApp/build`, so re-run it after every rebuild; clean up
-with `-Uninstall`. Running the app image directly is the quicker check, but only the registered
-package exercises the manifest, the Start-menu entry and the tiles.
-
-For the actual workflows — syncing listing text, replacing screenshots, adding or removing a
-Store language, Store field limits, rescuing a stuck submission or rollout — use the repo-local
-`update-microsoft-store-listing` skill instead of expanding this section.
+- Comments only where the code isn't self-explanatory.
+- try/catch at the top or bottom caller, not around every function.
+- Swift: one type per file; `@Observable` over `ObservableObject` except `VMStoreOwner`; no force unwraps.
+- Commit messages: one line, imperative.

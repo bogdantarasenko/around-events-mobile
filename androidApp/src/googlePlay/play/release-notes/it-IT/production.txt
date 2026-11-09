@@ -1,5 +1,0 @@
-• Ricevi una notifica per ogni nuovo articolo, con la sua miniatura
-• Scegli il font e la dimensione del titolo del lettore, con anteprima in tempo reale
-• I nuovi articoli aspettano dietro una pillola, così l’elenco non salta più mentre leggi
-• Mantieni gli articoli non letti durante lo scorrimento, impostabile per feed
-• I siti con verifica Cloudflare possono essere verificati per far caricare feed e articoli

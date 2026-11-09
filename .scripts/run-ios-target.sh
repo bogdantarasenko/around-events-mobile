@@ -4,8 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 
-PROJECT_PATH="$REPO_ROOT/iosApp/FeedFlow.xcodeproj"
-SCHEME="FeedFlow"
+PROJECT_PATH="$REPO_ROOT/iosApp/Around.xcodeproj"
+SCHEME="Around"
 BUILD_CONFIGURATION="${BUILD_CONFIGURATION:-Debug}"
 RUN_AFTER_BUILD=1
 VERBOSE_BUILD=1
@@ -21,7 +21,7 @@ Usage:
   .scripts/run-ios-target.sh --device "<device name fragment>" [--build-only] [--verbose-build] [--clean-install]
 
 Examples:
-  .scripts/run-ios-target.sh --simulator "iPhone 18 Pro"
+  .scripts/run-ios-target.sh --simulator "iPhone 17 Pro"
   .scripts/run-ios-target.sh --device "iPhone 16e" --verbose-build
 EOF
 }
@@ -249,7 +249,7 @@ build_for_simulator() {
   [ -n "$simulator_udid" ] || fail "resolved simulator UDID was empty for $simulator_name"
   destination="platform=iOS Simulator,id=$simulator_udid"
 
-  log "Building FeedFlow for simulator: $simulator_name"
+  log "Building Around for simulator: $simulator_name"
   run_xcodebuild "ios-simulator-$simulator_name" \
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \
@@ -294,7 +294,7 @@ build_for_device() {
   [ -n "$device_udid" ] || fail "resolved device UDID was empty for $device_query"
   destination="platform=iOS,id=$device_udid"
 
-  log "Building FeedFlow for device: $device_query"
+  log "Building Around for device: $device_query"
   run_xcodebuild "ios-device-$device_query" \
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \

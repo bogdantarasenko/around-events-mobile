@@ -1,0 +1,5 @@
+// Values shared by Debug and Release. Put a team id in Local.xcconfig (gitignored) to sign for a device.
+AROUND_BASE_URL = https:/$()/around.events
+AROUND_DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"

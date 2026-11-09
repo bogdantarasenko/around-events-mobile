@@ -1,166 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.TTS_SERVICE"/>
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW"/>
-            <category android:name="android.intent.category.BROWSABLE"/>
-            <data android:scheme="https"/>
-        </intent>
-        <intent>
-            <action android:name="android.support.customtabs.action.CustomTabsService"/>
-        </intent>
-    </queries>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name=".FeedFlowApp"
-        android:allowBackup="true"
-        android:fullBackupContent="@xml/backup_rules"
-        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:name=".AroundApp"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="FeedFlow"
+        android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
-        android:enableOnBackInvokedCallback="false"
-        android:theme="@style/Theme.FeedFlow"
-        android:usesCleartextTraffic="true">
-
-        <!--
-            Size and orientation changes are absorbed by the composition instead of recreating the
-            activity (issue #1401): a recreated web view reloads the reader article and loses the
-            reading position. density and uiMode are left out on purpose and still recreate.
-        -->
-        <activity
-            android:name="com.prof18.feedflow.android.MainActivity"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
-            android:exported="true"
-            android:launchMode="singleTop">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data
-                    android:host="feed"
-                    android:scheme="feedflow"/>
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data
-                    android:host="feedsourcefilter"
-                    android:scheme="feedflow"/>
-            </intent-filter>
-
-        </activity>
-
-        <service
-            android:name=".audio.AudioPlaybackService"
-            android:foregroundServiceType="mediaPlayback"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="androidx.media3.session.MediaSessionService"/>
-            </intent-filter>
-        </service>
-
-        <activity android:name=".accounts.dropbox.DropboxSyncActivity"/>
-
-        <activity android:name=".accounts.googledrive.GoogleDriveSyncActivity"/>
+        android:theme="@style/Theme.Around">
 
         <activity
-            android:name="com.dropbox.core.android.AuthActivity"
-            android:configChanges="orientation|keyboard"
+            android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTask">
-            <!-- Your activity starting authorization flow should also configured with android:launchMode="singleTask".
-                 If that activity is configured with android:taskAffinity, this AuthActivity should also configured
-                 with the same android:taskAffinity so the auth result can be correctly passed back. -->
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
-                <data android:scheme="db-${dropboxKey}"/>
-
-                <action android:name="android.intent.action.VIEW"/>
-
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-            <!-- Additional intent-filter required as a workaround for Apps using targetSdk=33 until the fix in the Dropbox app is available to all users. https://github.com/dropbox/dropbox-sdk-java/issues/406 -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".addfeed.AddFeedExtensionActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Transparent">
-            <intent-filter>
-                <action android:name="android.intent.action.SEND"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="text/*"/>
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".widget.WidgetConfigurationActivity"
-            android:exported="true"
-            android:taskAffinity="">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
-            </intent-filter>
-        </activity>
-
-        <meta-data
-            android:name="firebase_crashlytics_collection_enabled"
-            android:value="false"/>
-
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup"
-                tools:node="remove"/>
-        </provider>
-
-        <receiver
-            android:name=".widget.FeedFlowWidgetReceiver"
-            android:exported="true">
-
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-            </intent-filter>
-
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/feedflow_widget_info"/>
-        </receiver>
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"/>
-        </provider>
-
     </application>
 </manifest>

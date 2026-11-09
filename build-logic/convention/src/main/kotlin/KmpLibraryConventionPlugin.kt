@@ -13,7 +13,7 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
             with(pluginManager) {
                 apply("com.android.kotlin.multiplatform.library")
                 apply("org.jetbrains.kotlin.multiplatform")
-                apply("com.feedflow.detekt")
+                apply("events.around.detekt")
             }
             configure<KotlinMultiplatformExtension> {
                 configure<KotlinMultiplatformAndroidLibraryTarget> {
@@ -28,6 +28,8 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
 
                 iosArm64()
                 iosSimulatorArm64()
+                // Simulator on Intel Macs.
+                iosX64()
 
                 compilerOptions {
                     freeCompilerArgs.add("-Xexpect-actual-classes")
