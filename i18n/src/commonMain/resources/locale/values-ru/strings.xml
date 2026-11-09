@@ -68,4 +68,24 @@
     <string name="category_games">Игры</string>
     <string name="category_creative">Творчество</string>
     <string name="category_learning">Обучение</string>
+    <string name="discover_upcoming">Ближайшие события</string>
+    <string name="discover_categories">По рубрикам</string>
+    <string name="discover_cities">Города</string>
+    <string name="discover_organizers">Организаторы</string>
+    <string name="all_events">Все события</string>
+    <string name="events_count">Событий: %s</string>
+    <string name="past_count">Проведено: %s</string>
+    <string name="search_placeholder">Поиск событий</string>
+    <string name="search_hint">Название, место или организатор</string>
+    <string name="search_empty">Ничего не нашлось</string>
+    <string name="follow">Следить</string>
+    <string name="follow_hint">Следить можно в боте Telegram.</string>
+    <string name="detail_about">О событии</string>
+    <string name="detail_location">Место</string>
+    <string name="map_title">Карта</string>
+    <string name="map_unlocated">Пока не на карте: %s</string>
+    <string name="organizer_events">Ближайшие</string>
+    <string name="organizer_empty">Пока ничего не запланировано</string>
+    <string name="close">Закрыть</string>
+    <string name="more">Ещё</string>
 </resources>

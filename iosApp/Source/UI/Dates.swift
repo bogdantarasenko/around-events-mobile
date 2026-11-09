@@ -23,15 +23,31 @@ enum Dates {
         return formatted(date, template: "dMMMMEEE", locale: locale)
     }
 
-    /// The heading of a feed day: today, tomorrow, or the date.
-    static func heading(_ day: FeedDay, strings: AroundStrings, locale: Locale) -> String {
-        guard let date = day.date else { return strings.feedOngoing }
+    /// The heading of a feed day in two parts, "8 November" and "Wednesday", or "Today" and "Wednesday".
+    static func headingParts(_ day: FeedDay, strings: AroundStrings, locale: Locale) -> (String, String?) {
+        guard let iso = day.date, let date = parse(iso) else { return (strings.feedOngoing, nil) }
+        let weekday = formatted(date, template: "EEEE", locale: locale)
         let now = Date()
-        if date == localDay(now) { return strings.feedToday }
-        if let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: now), date == localDay(tomorrow) {
-            return strings.feedTomorrow
+        if iso == localDay(now) { return (strings.feedToday, weekday) }
+        if let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: now), iso == localDay(tomorrow) {
+            return (strings.feedTomorrow, weekday)
         }
-        return Self.day(date, locale: locale) ?? date
+        return (formatted(date, template: "dMMMM", locale: locale), weekday)
+    }
+
+    /// `Tomorrow, 19:00`, `Sat, 15 Nov, 19:00`: a day and time in one short line, for shelves and the map sheet.
+    static func short(_ event: Event, strings: AroundStrings, locale: Locale) -> String {
+        guard let iso = event.startDate, let date = parse(iso) else { return strings.dateNone }
+        let now = Date()
+        let day: String
+        if iso == localDay(now) {
+            day = strings.feedToday
+        } else if let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: now), iso == localDay(tomorrow) {
+            day = strings.feedTomorrow
+        } else {
+            day = formatted(date, template: "EEEdMMM", locale: locale)
+        }
+        return [day, event.startTime].compactMap { $0 }.joined(separator: ", ")
     }
 
     /// `19:00–21:00`, or nil when the event gave no time.

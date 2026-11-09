@@ -1,0 +1,118 @@
+import AroundKit
+import MapKit
+import SwiftUI
+
+/// Location with a map, price, organizer, languages, repeats and the description — in the designs' sections.
+struct EventFacts: View {
+    let event: Event
+    let nextDates: [String]
+    let onOpenOrganizer: (String) -> Void
+    @Environment(\.strings) private var strings
+    @Environment(\.locale) private var locale
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            location
+            if let organizer = event.organizer {
+                section(strings.detailOrganizer) {
+                    Button { onOpenOrganizer(organizer.slug) } label: {
+                        HStack(spacing: 10) {
+                            Avatar(url: organizer.avatarUrl, name: organizer.name, size: 32)
+                            Text(organizer.name).font(.body.weight(.medium))
+                            Spacer()
+                            Image(systemName: "chevron.right").foregroundStyle(.white.opacity(0.5))
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            if let price = Dates.price(event, strings: strings) {
+                section(strings.detailPrice) { Text(price) }
+            }
+            details
+            if let description = event.description_, !description.isEmpty {
+                section(strings.detailAbout) {
+                    Text(description).textSelection(.enabled)
+                }
+            }
+            if let category = event.category {
+                Text("# " + Labels.category(category, strings))
+                    .font(.subheadline.weight(.medium))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(.white.opacity(0.15), in: Capsule())
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var location: some View {
+        if event.venue != nil || event.address != nil {
+            section(strings.detailLocation) {
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if let venue = event.venue { Text(venue).font(.body.weight(.medium)) }
+                        if let address = event.address { Text(address).foregroundStyle(.white.opacity(0.7)) }
+                    }
+                    if let lat = event.latitude?.doubleValue, let lon = event.longitude?.doubleValue {
+                        let point = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                        Map(initialPosition: .region(MKCoordinateRegion(center: point, latitudinalMeters: 800, longitudinalMeters: 800))) {
+                            Marker(event.venue ?? event.title, coordinate: point)
+                        }
+                        .frame(height: 150)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .allowsHitTesting(false)
+                    }
+                    Button(strings.openMap) { openMap() }.font(.subheadline.weight(.medium))
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var details: some View {
+        let rows: [(String, String)] = [
+            event.languages.isEmpty ? nil : (strings.detailLanguages, languageNames),
+            event.withKids?.boolValue == true ? (strings.detailWithKids, "✓") : nil,
+            event.recurrence.map { recurrence in
+                let every = recurrence.freq == "biweekly" ? strings.everyBiweekly : strings.everyWeekly
+                return (strings.detailRepeats, strings.repeatRule(every, Dates.day(recurrence.until, locale: locale) ?? recurrence.until))
+            },
+            nextDates.isEmpty ? nil : (strings.nextDates, nextDates.compactMap { Dates.day($0, locale: locale) }.joined(separator: ", ")),
+        ].compactMap { $0 }
+        ForEach(rows, id: \.0) { label, value in
+            section(label) { Text(value) }
+        }
+    }
+
+    private var languageNames: String {
+        let names = Dictionary(uniqueKeysWithValues: VocabularyKt.EVENT_LANGUAGES.map {
+            ($0.first as String? ?? "", $0.second as String? ?? "")
+        })
+        return event.languages.map { names[$0] ?? $0 }.joined(separator: ", ")
+    }
+
+    // Apple Maps by the point when the backend found one, by the text otherwise.
+    private func openMap() {
+        var components = URLComponents(string: "https://maps.apple.com/")
+        let place = [event.venue, event.address].compactMap { $0 }.joined(separator: ", ")
+        var items = [URLQueryItem(name: "q", value: place.isEmpty ? event.title : place)]
+        if let lat = event.latitude?.doubleValue, let lon = event.longitude?.doubleValue {
+            items.append(URLQueryItem(name: "ll", value: "\(lat),\(lon)"))
+        } else {
+            items[0].value = "\(place), \(event.city.name)"
+        }
+        components?.queryItems = items
+        if let url = components?.url { openURL(url) }
+    }
+
+    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.subheadline).foregroundStyle(.white.opacity(0.6))
+            Divider().overlay(Color.white.opacity(0.2))
+            content()
+        }
+    }
+}

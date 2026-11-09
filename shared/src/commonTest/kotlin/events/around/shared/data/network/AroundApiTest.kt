@@ -1,6 +1,5 @@
 package events.around.shared.data.network
 
-import events.around.core.model.City
 import events.around.shared.AppConfig
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
@@ -67,12 +66,21 @@ class AroundApiTest {
     }
 
     @Test
-    fun `cities come from the page props`() {
-        val html = """<html><body><script data-page="app" type="application/json">""" +
-            """{"component":"mini-app","props":{"cities":[{"slug":"krakow","name":"Kraków"}],"botId":9161757426}}""" +
-            """</script><div id="app"></div></body></html>"""
+    fun `organizer page carries its events and the follow link`() = runTest {
+        val api = api {
+            json(
+                """{"data":{"slug":"dom","name":"Дом","url":"https://around.test/o/dom",""" +
+                    """"link_urls":{"instagram":"https://instagram.com/dom"},""" +
+                    """"follow_url":"https://t.me/bot?start=o_dom",""" +
+                    """"past_count":4,"events":[{"id":1,"title":"T","city":{"slug":"warsaw","name":"Warszawa"}}]}}""",
+            )
+        }
 
-        assertEquals(SiteProps(listOf(City("krakow", "Kraków"))), parseSiteProps(html))
-        assertFailsWith<ApiException> { parseSiteProps("<html></html>") }
+        val page = api.organizer("dom")
+
+        assertEquals("https://instagram.com/dom", page.links.instagram)
+        assertEquals(4, page.pastCount)
+        assertEquals(1L, page.events.single().id)
+        assertEquals("https://around.test/api/organizers/dom", requests.single().url.toString())
     }
 }

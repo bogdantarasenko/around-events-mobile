@@ -5,10 +5,10 @@ import com.russhwolf.settings.MapSettings
 import events.around.core.model.AppLanguage
 import events.around.core.model.ThemeMode
 import events.around.shared.AppConfig
+import events.around.shared.data.city.CitiesRepository
 import events.around.shared.data.network.AroundApi
 import events.around.shared.data.network.createHttpClient
 import events.around.shared.data.settings.SettingsRepository
-import events.around.shared.data.site.SiteRepository
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respondError
 import io.ktor.http.HttpStatusCode
@@ -27,8 +27,9 @@ class SettingsViewModelTest {
     private val config = AppConfig(baseUrl = "https://example.test", versionName = "1.2.3", isDebug = false)
 
     // Settings never call the network; the engine only has to exist.
-    private fun site(settings: MapSettings) = SiteRepository(
+    private fun site(settings: MapSettings) = CitiesRepository(
         AroundApi(createHttpClient(MockEngine { respondError(HttpStatusCode.NotFound) }, config)),
+        SettingsRepository(settings),
         settings,
     )
 

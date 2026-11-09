@@ -6,8 +6,8 @@ import events.around.core.model.AppLanguage
 import events.around.core.model.City
 import events.around.core.model.ThemeMode
 import events.around.shared.AppConfig
+import events.around.shared.data.city.CitiesRepository
 import events.around.shared.data.settings.SettingsRepository
-import events.around.shared.data.site.SiteRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
-    site: SiteRepository,
+    cities: CitiesRepository,
     config: AppConfig,
 ) : ViewModel() {
 
@@ -23,14 +23,14 @@ class SettingsViewModel(
         settingsRepository.theme,
         settingsRepository.language,
         settingsRepository.city,
-        site.props,
-    ) { theme, language, city, props ->
+        cities.cities,
+    ) { theme, language, city, all ->
         SettingsUiState(
             theme = theme,
             language = language,
             versionName = config.versionName,
             city = city,
-            cities = props?.cities.orEmpty(),
+            cities = all.orEmpty(),
             siteUrl = config.baseUrl,
         )
     }.stateIn(
@@ -41,7 +41,7 @@ class SettingsViewModel(
             language = settingsRepository.language.value,
             versionName = config.versionName,
             city = settingsRepository.city.value,
-            cities = site.props.value?.cities.orEmpty(),
+            cities = cities.citiesNow.orEmpty(),
             siteUrl = config.baseUrl,
         ),
     )

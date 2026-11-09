@@ -115,6 +115,7 @@ dependencies {
     implementation(libs.io.coil.compose)
     implementation(libs.io.coil.network)
     implementation(libs.androidx.browser)
+    implementation(libs.osmdroid)
 
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)

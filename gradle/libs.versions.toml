@@ -12,6 +12,7 @@ detekt = "2.0.0-alpha.6"
 detekt-compose-rules = "0.6.8"
 immutable-collections = "0.5.2"
 io-coil = "3.6.3"
+osmdroid = "6.1.20"
 junit = "4.13.2"
 kermit = "2.2.0"
 koin-bom = "4.2.2"
@@ -50,6 +51,7 @@ detekt-ktlint-wrapper = { group = "dev.detekt", name = "detekt-rules-ktlint-wrap
 immutable-collections = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "immutable-collections" }
 io-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "io-coil" }
 io-coil-network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "io-coil" }
+osmdroid = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroid" }
 junit = { module = "junit:junit", version.ref = "junit" }
 koin-android = { module = "io.insert-koin:koin-android" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }

@@ -7,16 +7,18 @@ shared Kotlin Multiplatform logic. It started from FeedFlow; only the build setu
 bridge were kept (see `NOTICE`). The product scope is `../around-events-mobile-prd.md`; the backend
 is `../around-events`.
 
-The app is the reader side: a city's listing by day (`GET /api/cities/{city}/events`). It does not repeat
-what the Telegram mini-app already does — submitting, the organizer cabinet, the organizer page — and
-links to the mini-app for those instead.
+The app is the reader side, built after the reader screens of the Figma file `QedJXtS24P3L60Vf2wLvrY`
+(page `Luma Recreations`: Discover, category, organizer calendar, map, search, event detail). It uses the
+public `GET /api/cities`, `/api/cities/{city}/events`, `/api/cities/{city}/organizers` and
+`/api/organizers/{slug}`. It does not repeat what the Telegram mini-app already does — submitting, the
+organizer cabinet, editing an organizer page — and links to the mini-app for those instead.
 
 ## Modules
 
 - `core/` — domain models, no platform code
 - `i18n/` — strings (en default, uk, ru, be) in `src/commonMain/resources/locale/values-*/strings.xml`
 - `shared/` — repositories, network, ViewModels, Koin DI; iOS framework `AroundKit`
-- `androidApp/` — Compose UI, Navigation 3
+- `androidApp/` — Compose UI, Navigation 3; the map is osmdroid (OpenStreetMap, no API key)
 - `iosApp/` — SwiftUI; `Around.xcodeproj` is generated from `project.yml` and not committed
 - `build-logic/` — convention plugins `events.around.library`, `.detekt`, `.versioning`
 
@@ -61,7 +63,7 @@ library is pinned to lifecycle 2.10.0).
 
 ## Checking offline behaviour
 
-The feed caches each city's listing in settings (`feed_<slug>`, plus `site_props` for the cities). To see the
+Every answer is cached in settings: `cities`, `feed_<slug>`, `organizers_<slug>`, `organizer_<slug>`. To see the
 offline state in the simulator, open the app once online, then rebuild against an unreachable server
 (`xcodebuild … 'AROUND_BASE_URL=http://127.0.0.1:9' build`): the cached listing shows with the offline banner.
 

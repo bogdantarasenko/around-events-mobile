@@ -5,8 +5,12 @@ import co.touchlab.kermit.NSLogWriter
 import events.around.i18n.AroundStrings
 import events.around.i18n.aroundStringsFor
 import events.around.shared.AppConfig
+import events.around.shared.presentation.feed.DiscoverViewModel
 import events.around.shared.presentation.feed.EventDetailViewModel
-import events.around.shared.presentation.feed.FeedViewModel
+import events.around.shared.presentation.feed.EventsViewModel
+import events.around.shared.presentation.feed.MapViewModel
+import events.around.shared.presentation.feed.OrganizerViewModel
+import events.around.shared.presentation.feed.SearchViewModel
 import events.around.shared.presentation.settings.SettingsViewModel
 import org.koin.core.Koin
 import org.koin.core.component.KoinComponent
@@ -27,7 +31,16 @@ object Deps : KoinComponent {
 
     fun getSettingsViewModel(): SettingsViewModel = get()
 
-    fun getFeedViewModel(): FeedViewModel = get()
+    fun getDiscoverViewModel(): DiscoverViewModel = get()
+
+    fun getMapViewModel(): MapViewModel = get()
+
+    fun getSearchViewModel(): SearchViewModel = get()
+
+    /** [category] null is the whole listing. */
+    fun getEventsViewModel(category: String?): EventsViewModel = get { parametersOf(category) }
+
+    fun getOrganizerViewModel(slug: String): OrganizerViewModel = get { parametersOf(slug) }
 
     fun getEventDetailViewModel(eventId: Long): EventDetailViewModel = get { parametersOf(eventId) }
 

@@ -14,16 +14,24 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import events.around.android.feed.EventDetailScreen
-import events.around.android.feed.FeedScreen
+import events.around.android.discover.DiscoverScreen
+import events.around.android.event.EventDetailScreen
+import events.around.android.events.EventsScreen
+import events.around.android.map.MapScreen
+import events.around.android.organizer.OrganizerScreen
+import events.around.android.search.SearchScreen
 import events.around.android.settings.SettingsScreen
 import events.around.android.ui.strings.LocalAppLocale
 import events.around.android.ui.strings.LocalAroundStrings
 import events.around.android.ui.strings.languageTagFor
 import events.around.android.ui.strings.stringsFor
 import events.around.android.ui.theme.AroundTheme
+import events.around.shared.presentation.feed.DiscoverViewModel
 import events.around.shared.presentation.feed.EventDetailViewModel
-import events.around.shared.presentation.feed.FeedViewModel
+import events.around.shared.presentation.feed.EventsViewModel
+import events.around.shared.presentation.feed.MapViewModel
+import events.around.shared.presentation.feed.OrganizerViewModel
+import events.around.shared.presentation.feed.SearchViewModel
 import events.around.shared.presentation.settings.SettingsViewModel
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -65,11 +73,36 @@ class MainActivity : ComponentActivity() {
             onBack = navigateBack,
             entryProvider = entryProvider {
                 entry<Home> {
-                    // Activity-scoped: the feed keeps its place while an event is open.
-                    FeedScreen(
-                        viewModel = koinViewModel<FeedViewModel>(),
+                    // Activity-scoped: it loads the city for every other screen and keeps its place.
+                    DiscoverScreen(
+                        viewModel = koinViewModel<DiscoverViewModel>(),
+                        navigate = { backStack.add(it) },
+                    )
+                }
+                entry<Events> { route ->
+                    val viewModel = koinViewModel<EventsViewModel>(key = "events-${route.category}") {
+                        parametersOf(route.category)
+                    }
+                    EventsScreen(viewModel, navigateBack, onOpen = { backStack.add(it) })
+                }
+                entry<OrganizerPage> { route ->
+                    val viewModel = koinViewModel<OrganizerViewModel>(key = "organizer-${route.slug}") {
+                        parametersOf(route.slug)
+                    }
+                    OrganizerScreen(viewModel, navigateBack, onOpenEvent = { backStack.add(EventDetail(it)) })
+                }
+                entry<MapRoute> {
+                    MapScreen(
+                        koinViewModel<MapViewModel>(),
+                        navigateBack,
                         onOpenEvent = { backStack.add(EventDetail(it)) },
-                        onOpenSettings = { backStack.add(Settings) },
+                    )
+                }
+                entry<Search> {
+                    SearchScreen(
+                        koinViewModel<SearchViewModel>(),
+                        navigateBack,
+                        onOpenEvent = { backStack.add(EventDetail(it)) },
                     )
                 }
                 entry<Settings> {
@@ -80,7 +113,11 @@ class MainActivity : ComponentActivity() {
                     val viewModel = koinViewModel<EventDetailViewModel>(key = "event-${route.eventId}") {
                         parametersOf(route.eventId)
                     }
-                    EventDetailScreen(viewModel = viewModel, navigateBack = navigateBack)
+                    EventDetailScreen(
+                        viewModel = viewModel,
+                        navigateBack = navigateBack,
+                        onOpenOrganizer = { backStack.add(OrganizerPage(it)) },
+                    )
                 }
             },
         )

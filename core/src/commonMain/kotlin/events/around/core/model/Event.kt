@@ -19,6 +19,9 @@ data class Event(
     @SerialName("end_time") val endTime: String? = null,
     val venue: String? = null,
     val address: String? = null,
+    /** Found by the backend from the place text; null until then, or when it found nothing. */
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     @SerialName("price_from") val priceFrom: String? = null,
     val currency: String? = null,
     val languages: List<String> = emptyList(),
@@ -40,12 +43,15 @@ data class Event(
     } else {
         startDate
     }
+
+    val hasLocation: Boolean get() = latitude != null && longitude != null
 }
 
 @Serializable
 data class City(
     val slug: String,
     val name: String,
+    @SerialName("upcoming_count") val upcomingCount: Int = 0,
 )
 
 @Serializable
@@ -60,4 +66,5 @@ data class EventOrganizer(
     val slug: String,
     val name: String,
     val url: String,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )

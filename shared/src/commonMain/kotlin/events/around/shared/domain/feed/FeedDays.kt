@@ -33,13 +33,20 @@ fun feedDays(events: List<Event>, today: String, category: String? = null): List
 }
 
 /** Categories present in [events], the most common first: the filter offers only what there is. */
-fun feedCategories(events: List<Event>): List<String> = events
+fun feedCategories(events: List<Event>): List<String> = categoryCounts(events).map { it.key }
+
+/** Each category in [events] with its number of events, the most common first. */
+fun categoryCounts(events: List<Event>): List<CategoryCount> = events
     .mapNotNull { it.category }
     .groupingBy { it }
     .eachCount()
-    .entries
-    .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
-    .map { it.key }
+    .map { (key, count) -> CategoryCount(key, count) }
+    .sortedWith(compareByDescending<CategoryCount> { it.count }.thenBy { it.key })
+
+data class CategoryCount(
+    val key: String,
+    val count: Int,
+)
 
 /** The next [count] dates of a repeating event, from [today] on; empty for a one-off. */
 fun nextDates(event: Event, today: String, count: Int = 3): List<String> {
@@ -71,3 +78,25 @@ private fun timeKey(event: Event): String = event.startTime ?: "~"
 private fun parse(value: String): LocalDate? = runCatching { LocalDate.parse(value) }.getOrNull()
 
 private const val DAYS_IN_WEEK = 7
+
+/**
+ * The next [count] events from [today] on, in the order the feed shows them: the "upcoming" shelf. What started
+ * earlier and is still on (month-long exhibitions) would fill it every day, so it isn't counted.
+ */
+fun upcomingEvents(events: List<Event>, today: String, count: Int): List<Event> =
+    feedDays(events, today).filterNot { it.isOngoing }.flatMap { it.events }.take(count)
+
+/**
+ * Events whose title, place, organizer or description contain every word of [query], ignoring case. The search
+ * runs on the loaded listing: it is a few hundred events at most.
+ */
+fun searchEvents(events: List<Event>, query: String): List<Event> {
+    val words = query.lowercase().split(' ').filter { it.isNotBlank() }
+    if (words.isEmpty()) return emptyList()
+    return events.filter { event ->
+        val text = listOfNotNull(event.title, event.venue, event.address, event.organizer?.name, event.description)
+            .joinToString(" ")
+            .lowercase()
+        words.all { it in text }
+    }
+}

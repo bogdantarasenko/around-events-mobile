@@ -68,4 +68,24 @@
     <string name="category_games">Ігри</string>
     <string name="category_creative">Творчість</string>
     <string name="category_learning">Навчання</string>
+    <string name="discover_upcoming">Найближчі події</string>
+    <string name="discover_categories">За рубриками</string>
+    <string name="discover_cities">Міста</string>
+    <string name="discover_organizers">Організатори</string>
+    <string name="all_events">Усі події</string>
+    <string name="events_count">Подій: %s</string>
+    <string name="past_count">Проведено: %s</string>
+    <string name="search_placeholder">Пошук подій</string>
+    <string name="search_hint">Назва, місце чи організатор</string>
+    <string name="search_empty">Нічого не знайшлося</string>
+    <string name="follow">Стежити</string>
+    <string name="follow_hint">Стежити можна в боті Telegram.</string>
+    <string name="detail_about">Про подію</string>
+    <string name="detail_location">Місце</string>
+    <string name="map_title">Мапа</string>
+    <string name="map_unlocated">Ще не на мапі: %s</string>
+    <string name="organizer_events">Найближчі</string>
+    <string name="organizer_empty">Поки нічого не заплановано</string>
+    <string name="close">Закрити</string>
+    <string name="more">Ще</string>
 </resources>

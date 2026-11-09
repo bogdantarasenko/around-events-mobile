@@ -69,4 +69,24 @@
     <string name="category_games">Games</string>
     <string name="category_creative">Workshops</string>
     <string name="category_learning">Learning</string>
+    <string name="discover_upcoming">Upcoming events</string>
+    <string name="discover_categories">Browse by category</string>
+    <string name="discover_cities">Cities</string>
+    <string name="discover_organizers">Organizers</string>
+    <string name="all_events">All events</string>
+    <string name="events_count">Events: %s</string>
+    <string name="past_count">Held: %s</string>
+    <string name="search_placeholder">Search events</string>
+    <string name="search_hint">Title, place or organizer</string>
+    <string name="search_empty">Nothing found</string>
+    <string name="follow">Follow</string>
+    <string name="follow_hint">Following happens in the Telegram bot.</string>
+    <string name="detail_about">About</string>
+    <string name="detail_location">Location</string>
+    <string name="map_title">Map</string>
+    <string name="map_unlocated">Not on the map yet: %s</string>
+    <string name="organizer_events">Upcoming</string>
+    <string name="organizer_empty">Nothing planned yet</string>
+    <string name="close">Close</string>
+    <string name="more">More</string>
 </resources>

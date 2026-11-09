@@ -1,27 +1,21 @@
 import AroundKit
 import SwiftUI
 
-/// The feed, with event pages and settings pushed on top.
+/// Discover at the root, everything else pushed on top.
 struct HomeScreen: View {
-    @Environment(\.strings) private var strings
-    @StateObject private var feedStore = VMStoreOwner<FeedViewModel>(Deps.shared.getFeedViewModel())
+    @StateObject private var discoverStore = VMStoreOwner<DiscoverViewModel>(Deps.shared.getDiscoverViewModel())
     @State private var path: [AppRoute] = []
 
     var body: some View {
         NavigationStack(path: $path) {
-            FeedScreen(viewModel: feedStore.instance)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            path.append(.settings)
-                        } label: {
-                            Image(systemName: "gearshape").accessibilityLabel(strings.settingsTitle)
-                        }
-                    }
-                }
+            DiscoverScreen(viewModel: discoverStore.instance, path: $path)
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
-                    case let .eventDetail(id): EventDetailScreen(eventId: id)
+                    case let .eventDetail(id): EventDetailScreen(eventId: id, path: $path)
+                    case let .events(category): EventsScreen(category: category)
+                    case let .organizer(slug): OrganizerScreen(slug: slug)
+                    case .map: MapScreen(path: $path)
+                    case .search: SearchScreen()
                     case .settings: SettingsScreen()
                     }
                 }

@@ -3,13 +3,13 @@ package events.around.shared.presentation.feed
 import com.russhwolf.settings.MapSettings
 import events.around.core.model.City
 import events.around.shared.AppConfig
+import events.around.shared.data.city.CitiesRepository
 import events.around.shared.data.feed.FeedRepository
 import events.around.shared.data.network.AroundApi
-import events.around.shared.data.network.SiteProps
 import events.around.shared.data.network.apiJson
 import events.around.shared.data.network.createHttpClient
+import events.around.shared.data.organizers.OrganizersRepository
 import events.around.shared.data.settings.SettingsRepository
-import events.around.shared.data.site.SiteRepository
 import events.around.shared.presentation.ErrorKind
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockEngineConfig
@@ -23,6 +23,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.builtins.ListSerializer
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -30,7 +31,7 @@ import kotlin.test.assertEquals
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-class FeedViewModelTest {
+class DiscoverViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val settings = MapSettings()
     private val requested = mutableListOf<String>()
@@ -45,10 +46,10 @@ class FeedViewModelTest {
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         settings.putString(
-            "site_props",
+            "cities",
             apiJson.encodeToString(
-                SiteProps.serializer(),
-                SiteProps(listOf(City("krakow", "Kraków"), City("warsaw", "Warszawa"))),
+                ListSerializer(City.serializer()),
+                listOf(City("krakow", "Kraków"), City("warsaw", "Warszawa")),
             ),
         )
     }
@@ -59,11 +60,11 @@ class FeedViewModelTest {
     private fun listing(slug: String, title: String) =
         """{"data":[{"id":1,"title":"$title","city":{"slug":"$slug","name":"$slug"},"start_date":"2026-11-20"}]}"""
 
-    private fun viewModel(): FeedViewModel {
+    private fun viewModel(): DiscoverViewModel {
         // On the test dispatcher, so advanceUntilIdle() also waits for the responses.
         val engine = MockEngine(
             MockEngineConfig().apply {
-                dispatcher = this@FeedViewModelTest.dispatcher
+                dispatcher = this@DiscoverViewModelTest.dispatcher
                 addHandler { request ->
                     if (!online) error("offline")
                     val path = request.url.encodedPath
@@ -71,17 +72,18 @@ class FeedViewModelTest {
                     val body = when {
                         path.endsWith("/krakow/events") -> listing("krakow", "Kraków event")
                         path.endsWith("/warsaw/events") -> listing("warsaw", "Warsaw event")
-                        else -> SITE_PAGE
+                        path.endsWith("/organizers") -> ORGANIZERS
+                        else -> CITIES
                     }
                     respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
                 }
             },
         )
         val api = AroundApi(createHttpClient(engine, AppConfig("https://around.test", "1", false)))
-        return FeedViewModel(
+        return DiscoverViewModel(
+            CitiesRepository(api, SettingsRepository(settings), settings),
             FeedRepository(api, settings),
-            SiteRepository(api, settings),
-            SettingsRepository(settings),
+            OrganizersRepository(api, settings),
             clock,
         )
     }
@@ -93,8 +95,8 @@ class FeedViewModelTest {
 
         with(viewModel.state.value) {
             assertEquals("krakow", city?.slug)
-            assertEquals("Kraków event", days.single().events.single().title)
-            assertEquals("2026-11-20", days.single().date)
+            assertEquals("Kraków event", upcoming.single().title)
+            assertEquals("Дом", organizers.single().name)
         }
     }
 
@@ -106,11 +108,11 @@ class FeedViewModelTest {
         viewModel.selectCity("warsaw")
         advanceUntilIdle()
 
-        assertEquals("Warsaw event", viewModel.state.value.days.single().events.single().title)
+        assertEquals("Warsaw event", viewModel.state.value.upcoming.single().title)
         assertEquals("warsaw", settings.getStringOrNull("city"))
         assertEquals(
             listOf("/api/cities/krakow/events", "/api/cities/warsaw/events"),
-            requested.filter { "cities" in it },
+            requested.filter { it.endsWith("/events") },
         )
     }
 
@@ -124,7 +126,7 @@ class FeedViewModelTest {
         advanceUntilIdle()
 
         with(offline.state.value) {
-            assertEquals("Kraków event", days.single().events.single().title)
+            assertEquals("Kraków event", upcoming.single().title)
             assertEquals(ErrorKind.Offline, error?.kind)
         }
     }
@@ -142,7 +144,7 @@ class FeedViewModelTest {
     }
 
     private companion object {
-        const val SITE_PAGE = """<script data-page="app">{"props":{"cities":[{"slug":"krakow","name":"Kraków"},""" +
-            """{"slug":"warsaw","name":"Warszawa"}]}}</script>"""
+        const val CITIES = """{"data":[{"slug":"krakow","name":"Kraków"},{"slug":"warsaw","name":"Warszawa"}]}"""
+        const val ORGANIZERS = """{"data":[{"slug":"dom","name":"Дом","url":"https://around.test/o/dom"}]}"""
     }
 }

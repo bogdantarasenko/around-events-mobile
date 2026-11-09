@@ -68,4 +68,24 @@
     <string name="category_games">Гульні</string>
     <string name="category_creative">Творчасць</string>
     <string name="category_learning">Навучанне</string>
+    <string name="discover_upcoming">Бліжэйшыя падзеі</string>
+    <string name="discover_categories">Па рубрыках</string>
+    <string name="discover_cities">Гарады</string>
+    <string name="discover_organizers">Арганізатары</string>
+    <string name="all_events">Усе падзеі</string>
+    <string name="events_count">Падзей: %s</string>
+    <string name="past_count">Праведзена: %s</string>
+    <string name="search_placeholder">Пошук падзей</string>
+    <string name="search_hint">Назва, месца ці арганізатар</string>
+    <string name="search_empty">Нічога не знайшлося</string>
+    <string name="follow">Сачыць</string>
+    <string name="follow_hint">Сачыць можна ў боце Telegram.</string>
+    <string name="detail_about">Пра падзею</string>
+    <string name="detail_location">Месца</string>
+    <string name="map_title">Мапа</string>
+    <string name="map_unlocated">Пакуль не на мапе: %s</string>
+    <string name="organizer_events">Бліжэйшыя</string>
+    <string name="organizer_empty">Пакуль нічога не запланавана</string>
+    <string name="close">Закрыць</string>
+    <string name="more">Яшчэ</string>
 </resources>

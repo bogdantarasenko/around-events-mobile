@@ -10,4 +10,17 @@ data object Home : NavKey
 data object Settings : NavKey
 
 @Serializable
+data object MapRoute : NavKey
+
+@Serializable
+data object Search : NavKey
+
+@Serializable
 data class EventDetail(val eventId: Long) : NavKey
+
+/** The city's listing; with a category, that category's page. */
+@Serializable
+data class Events(val category: String? = null) : NavKey
+
+@Serializable
+data class OrganizerPage(val slug: String) : NavKey

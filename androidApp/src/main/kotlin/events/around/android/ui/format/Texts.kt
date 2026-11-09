@@ -47,15 +47,29 @@ fun formatDay(iso: String?, locale: Locale): String? {
     return DateTimeFormatter.ofPattern("d MMMM, EEE", locale).format(date)
 }
 
-/** The heading of a feed day: today, tomorrow, or the date. */
-fun FeedDay.heading(strings: AroundStrings, locale: Locale): String {
+/** The heading of a feed day in two parts: "8 November" and "Wednesday", or "Today" and "Wednesday". */
+fun FeedDay.headingParts(strings: AroundStrings, locale: Locale): Pair<String, String?> {
+    val day = date?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return strings.feedOngoing to null
+    val weekday = DateTimeFormatter.ofPattern("EEEE", locale).format(day)
     val today = LocalDate.now()
-    return when (date) {
-        null -> strings.feedOngoing
-        today.toString() -> strings.feedToday
-        today.plusDays(1).toString() -> strings.feedTomorrow
-        else -> formatDay(date, locale) ?: date.orEmpty()
+    val main = when (day) {
+        today -> strings.feedToday
+        today.plusDays(1) -> strings.feedTomorrow
+        else -> DateTimeFormatter.ofPattern("d MMMM", locale).format(day)
     }
+    return main to weekday
+}
+
+/** `Tomorrow, 19:00`, `Sat, 15 Nov, 19:00`: a day and time in one short line, for shelves and the map sheet. */
+fun Event.shortWhen(strings: AroundStrings, locale: Locale): String {
+    val day = startDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return strings.dateNone
+    val today = LocalDate.now()
+    val label = when (day) {
+        today -> strings.feedToday
+        today.plusDays(1) -> strings.feedTomorrow
+        else -> DateTimeFormatter.ofPattern("EEE, d MMM", locale).format(day)
+    }
+    return listOfNotNull(label, startTime).joinToString(", ")
 }
 
 /** `19:00–21:00`, or null when the event gave no time. */
