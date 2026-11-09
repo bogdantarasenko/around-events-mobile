@@ -8,8 +8,5 @@ enum Site {
             ?? URL(fileURLWithPath: "/")
     }
 
-    /// The mini-app opened in a browser: it takes submissions outside Telegram too.
-    static var submit: URL { url }
-
     static var rules: URL { url.appending(path: "rules") }
 }

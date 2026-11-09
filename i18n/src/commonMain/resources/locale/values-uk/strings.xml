@@ -104,4 +104,6 @@
     <string name="period_weekend">Вихідні</string>
     <string name="map_on_map">%s з %s на мапі</string>
     <string name="map_empty">Немає подій на мапі на цей час</string>
+    <string name="my_events">Мої події</string>
+    <string name="mini_app_offline">Формі потрібен інтернет. Перевірте з\'єднання і спробуйте ще раз.</string>
 </resources>

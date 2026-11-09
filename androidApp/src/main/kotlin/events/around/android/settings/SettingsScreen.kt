@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Apartment
@@ -48,6 +49,7 @@ import events.around.android.ui.theme.AroundColors
 import events.around.android.ui.theme.LocalDarkTheme
 import events.around.core.model.AppLanguage
 import events.around.core.model.ThemeMode
+import events.around.shared.domain.miniapp.MiniAppScreen
 import events.around.shared.presentation.settings.SettingsViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -56,6 +58,7 @@ private val Pink = Color(0xFFFF2D55)
 private val Purple = Color(0xFFAF52DE)
 private val Orange = Color(0xFFFF9500)
 private val Gray = Color(0xFF8E8E93)
+private val Green = Color(0xFF34C759)
 private val GroupedLight = Color(0xFFF2F2F7)
 private val GroupedDark = Color(0xFF000000)
 
@@ -63,6 +66,7 @@ private val GroupedDark = Color(0xFF000000)
 @Composable
 fun SettingsScreen(
     navigateBack: () -> Unit,
+    onOpenMiniApp: (MiniAppScreen) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
@@ -118,7 +122,9 @@ fun SettingsScreen(
                 )
             }
             Group(strings.settingsResources) {
-                Row(Icons.Filled.Add, Orange, strings.feedSubmit, external = true) { context.openUrl(state.siteUrl) }
+                Row(Icons.Filled.Add, Orange, strings.feedSubmit) { onOpenMiniApp(MiniAppScreen.Submit) }
+                Divider()
+                Row(Icons.AutoMirrored.Filled.List, Green, strings.myEvents) { onOpenMiniApp(MiniAppScreen.MyEvents) }
                 Divider()
                 Row(Icons.Filled.Description, Gray, strings.settingsRules, external = true) {
                     context.openUrl(state.siteUrl.trimEnd('/') + "/rules")

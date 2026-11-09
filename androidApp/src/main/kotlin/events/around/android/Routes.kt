@@ -1,6 +1,7 @@
 package events.around.android
 
 import androidx.navigation3.runtime.NavKey
+import events.around.shared.domain.miniapp.MiniAppScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -31,3 +32,7 @@ data object Cities : NavKey
 /** A city's page, which may not be the city the app reads. */
 @Serializable
 data class CityPage(val slug: String) : NavKey
+
+/** The around.events mini-app in a WebView. */
+@Serializable
+data class MiniApp(val screen: MiniAppScreen) : NavKey

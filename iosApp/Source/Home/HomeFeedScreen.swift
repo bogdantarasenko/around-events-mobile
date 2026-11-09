@@ -7,10 +7,10 @@ struct HomeFeedScreen: View {
     let discover: DiscoverViewModel
     @Binding var path: [AppRoute]
     @Environment(\.strings) private var strings
-    @Environment(\.openURL) private var openURL
     @StateObject private var store = VMStoreOwner<EventsViewModel>(Deps.shared.getEventsViewModel(category: nil, citySlug: nil))
     @State private var state: EventsUiState?
     @State private var cities: DiscoverUiState?
+    @State private var showsSubmit = false
 
     var body: some View {
         let state = state ?? store.instance.state.value
@@ -42,13 +42,20 @@ struct HomeFeedScreen: View {
             ToolbarItem(placement: .topBarLeading) { brand(cities) }
                 .hidingSharedBackground()
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button { openURL(Site.submit) } label: { Image(systemName: "plus") }
+                Button { showsSubmit = true } label: { Image(systemName: "plus") }
                     .accessibilityLabel(strings.feedSubmit)
                 Button { path.append(.settings) } label: { Image(systemName: "gearshape") }
                     .accessibilityLabel(strings.settingsTitle)
             }
         }
         .refreshable { discover.refresh() }
+        .fullScreenCover(isPresented: $showsSubmit) { MiniAppSheet(screen: debugMiniApp ?? .submit) }
+        .onAppear {
+            #if DEBUG
+            // `-AroundMiniApp submit|me` opens the mini-app at launch, to check it in the simulator.
+            if debugMiniApp != nil { showsSubmit = true }
+            #endif
+        }
         .task {
             for await value in store.instance.state {
                 self.state = value
@@ -85,5 +92,13 @@ struct HomeFeedScreen: View {
         .disabled(cities.cities.count < 2)
         .accessibilityLabel(strings.feedCity)
         .accessibilityValue(cities.city?.name ?? "")
+    }
+
+    private var debugMiniApp: MiniAppScreen? {
+        switch UserDefaults.standard.string(forKey: "AroundMiniApp") {
+        case "submit": .submit
+        case "me": .myEvents
+        default: nil
+        }
     }
 }

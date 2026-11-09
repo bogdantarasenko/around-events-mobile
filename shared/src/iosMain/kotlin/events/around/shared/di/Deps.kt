@@ -5,6 +5,7 @@ import co.touchlab.kermit.NSLogWriter
 import events.around.i18n.AroundStrings
 import events.around.i18n.aroundStringsFor
 import events.around.shared.AppConfig
+import events.around.shared.domain.miniapp.MiniAppLinks
 import events.around.shared.presentation.feed.DiscoverViewModel
 import events.around.shared.presentation.feed.EventDetailViewModel
 import events.around.shared.presentation.feed.EventsViewModel
@@ -44,6 +45,8 @@ object Deps : KoinComponent {
     fun getOrganizerViewModel(slug: String): OrganizerViewModel = get { parametersOf(slug) }
 
     fun getEventDetailViewModel(eventId: Long): EventDetailViewModel = get { parametersOf(eventId) }
+
+    fun getMiniAppLinks(): MiniAppLinks = get()
 
     fun strings(languageTag: String): AroundStrings = aroundStringsFor(languageTag)
 }

@@ -33,23 +33,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
-import events.around.android.BuildConfig
 import events.around.android.EventDetail
+import events.around.android.MiniApp
 import events.around.android.R
 import events.around.android.Settings
 import events.around.android.ui.components.CategoryFilter
 import events.around.android.ui.components.ErrorBanner
 import events.around.android.ui.components.eventDays
-import events.around.android.ui.components.openUrl
 import events.around.android.ui.format.text
 import events.around.android.ui.strings.LocalAroundStrings
 import events.around.core.model.City
+import events.around.shared.domain.miniapp.MiniAppScreen
 import events.around.shared.presentation.feed.DiscoverViewModel
 import events.around.shared.presentation.feed.EventsViewModel
 
@@ -67,7 +66,6 @@ fun HomeFeedScreen(
     val state by events.state.collectAsStateWithLifecycle()
     val cities by discover.state.collectAsStateWithLifecycle()
     val strings = LocalAroundStrings.current
-    val context = LocalContext.current
     val scroll = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scroll.nestedScrollConnection),
@@ -76,7 +74,7 @@ fun HomeFeedScreen(
             TopAppBar(
                 title = { CityTitle(cities.city, cities.cities, discover::selectCity) },
                 actions = {
-                    IconButton(onClick = { context.openUrl(BuildConfig.BASE_URL) }) {
+                    IconButton(onClick = { navigate(MiniApp(MiniAppScreen.Submit)) }) {
                         Icon(Icons.Outlined.Add, contentDescription = strings.feedSubmit)
                     }
                     IconButton(onClick = { navigate(Settings) }) {

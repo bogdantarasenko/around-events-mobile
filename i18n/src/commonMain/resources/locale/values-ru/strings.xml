@@ -104,4 +104,6 @@
     <string name="period_weekend">Выходные</string>
     <string name="map_on_map">%s из %s на карте</string>
     <string name="map_empty">На это время событий на карте нет</string>
+    <string name="my_events">Мои события</string>
+    <string name="mini_app_offline">Форме нужен интернет. Проверьте соединение и попробуйте ещё раз.</string>
 </resources>

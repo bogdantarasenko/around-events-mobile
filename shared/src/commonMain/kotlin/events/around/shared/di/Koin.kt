@@ -7,6 +7,7 @@ import events.around.shared.data.network.AroundApi
 import events.around.shared.data.network.createHttpClient
 import events.around.shared.data.organizers.OrganizersRepository
 import events.around.shared.data.settings.SettingsRepository
+import events.around.shared.domain.miniapp.MiniAppLinks
 import events.around.shared.presentation.feed.DiscoverViewModel
 import events.around.shared.presentation.feed.EventDetailViewModel
 import events.around.shared.presentation.feed.EventsViewModel
@@ -44,6 +45,7 @@ internal val commonModule = module {
     single { CitiesRepository(api = get(), preferences = get(), settings = get()) }
     single { FeedRepository(api = get(), settings = get()) }
     single { OrganizersRepository(api = get(), settings = get()) }
+    single { MiniAppLinks(config = get(), settings = get(), cities = get()) }
 
     viewModelOf(::SettingsViewModel)
     viewModelOf(::DiscoverViewModel)

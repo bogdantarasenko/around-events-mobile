@@ -8,6 +8,7 @@ struct SettingsScreen: View {
     @Environment(\.openURL) private var openURL
     @StateObject private var store = VMStoreOwner<SettingsViewModel>(Deps.shared.getSettingsViewModel())
     @State private var state: SettingsUiState?
+    @State private var miniApp: MiniAppScreen?
 
     var body: some View {
         let state = state ?? store.instance.state.value
@@ -40,8 +41,11 @@ struct SettingsScreen: View {
             }
 
             Section {
-                Link(destination: Site.submit) {
+                Button { miniApp = .submit } label: {
                     Label(strings.feedSubmit, systemImage: "plus").labelStyle(.settingsIcon(.orange))
+                }
+                Button { miniApp = .myEvents } label: {
+                    Label(strings.myEvents, systemImage: "list.bullet.rectangle").labelStyle(.settingsIcon(.green))
                 }
                 Link(destination: Site.rules) {
                     Label(strings.settingsRules, systemImage: "doc.text.fill").labelStyle(.settingsIcon(.gray))
@@ -58,6 +62,7 @@ struct SettingsScreen: View {
             }
         }
         .tint(Palette.ink)
+        .fullScreenCover(item: $miniApp) { MiniAppSheet(screen: $0) }
         .navigationTitle(strings.settingsTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task {

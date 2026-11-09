@@ -11,7 +11,9 @@ The app is the reader side, built after the reader screens of the Figma file `Qe
 (page `Luma Recreations`: Discover, category, organizer calendar, map, search, event detail). It uses the
 public `GET /api/cities`, `/api/cities/{city}/events`, `/api/cities/{city}/organizers` and
 `/api/organizers/{slug}`. It does not repeat what the Telegram mini-app already does — submitting, the
-organizer cabinet, editing an organizer page — and links to the mini-app for those instead.
+organizer cabinet, editing an organizer page — it opens the mini-app itself for those, in a WebView
+(`MiniAppSheet` on iOS, `MiniAppScreen` on Android; the address comes from shared `MiniAppLinks`). The mini-app
+reads `?lang=`, `?theme=` and signs in without a popup via `#tgAuthResult`, so keep both sides in step.
 
 ## Modules
 
@@ -79,7 +81,7 @@ attribution button visible.
 Debug builds read two launch arguments, so screens can be checked without tapping:
 `xcrun simctl launch booted events.around.app.debug -AroundTab discover` (or `map`), and
 `-AroundRoute event:<id>`, `organizer:<slug>`, `events:<category>`, `city:<slug>`, `cities`, `search` or `settings`
-to push a screen on the Home tab; `-AroundMapList YES` opens the map's event list.
+to push a screen on the Home tab; `-AroundMapList YES` opens the map's event list; `-AroundMiniApp submit|me` opens the mini-app.
 
 ## Rules
 

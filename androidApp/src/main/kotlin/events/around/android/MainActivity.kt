@@ -23,6 +23,7 @@ import events.around.android.home.HomeFeedScreen
 import events.around.android.home.HomeScreen
 import events.around.android.home.HomeTab
 import events.around.android.map.MapScreen
+import events.around.android.miniapp.MiniAppScreen
 import events.around.android.organizer.OrganizerScreen
 import events.around.android.search.SearchScreen
 import events.around.android.settings.SettingsScreen
@@ -142,7 +143,10 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 entry<Settings> {
-                    SettingsScreen(navigateBack = navigateBack)
+                    SettingsScreen(navigateBack = navigateBack, onOpenMiniApp = { backStack.add(MiniApp(it)) })
+                }
+                entry<MiniApp> { route ->
+                    MiniAppScreen(screen = route.screen, navigateBack = navigateBack)
                 }
                 entry<EventDetail> { route ->
                     // Keyed by event: each event gets its own view model.

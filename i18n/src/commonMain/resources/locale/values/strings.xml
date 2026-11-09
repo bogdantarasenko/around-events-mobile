@@ -105,4 +105,6 @@
     <string name="period_weekend">Weekend</string>
     <string name="map_on_map">%s of %s on the map</string>
     <string name="map_empty">No events on the map for this time</string>
+    <string name="my_events">My events</string>
+    <string name="mini_app_offline">The form needs the internet. Check the connection and try again.</string>
 </resources>
