@@ -78,7 +78,8 @@ attribution button visible.
 
 Debug builds read two launch arguments, so screens can be checked without tapping:
 `xcrun simctl launch booted events.around.app.debug -AroundTab discover` (or `map`), and
-`-AroundRoute event:<id>`, `organizer:<slug>` or `events:<category>` to push a screen on the Home tab.
+`-AroundRoute event:<id>`, `organizer:<slug>`, `events:<category>`, `city:<slug>`, `cities`, `search` or `settings`
+to push a screen on the Home tab.
 
 ## Rules
 

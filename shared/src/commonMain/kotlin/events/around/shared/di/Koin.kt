@@ -49,7 +49,7 @@ internal val commonModule = module {
     viewModelOf(::DiscoverViewModel)
     viewModelOf(::MapViewModel)
     viewModelOf(::SearchViewModel)
-    viewModel { (category: String?) -> EventsViewModel(category, get(), get(), get()) }
+    viewModel { (category: String?, citySlug: String?) -> EventsViewModel(category, citySlug, get(), get(), get()) }
     viewModel { (slug: String) -> OrganizerViewModel(slug, get(), get()) }
     viewModel { (eventId: Long) -> EventDetailViewModel(eventId, get(), get(), get()) }
 }

@@ -28,7 +28,7 @@ struct EventRow: View {
                         meta("clock", when)
                     }
                     if !compact, let venue = event.venue {
-                        meta("mappin.and.ellipse", venue)
+                        meta("mappin", venue)
                     }
                 }
                 .padding(.top, 8)

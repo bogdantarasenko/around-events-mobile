@@ -47,11 +47,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
+import events.around.android.Cities
+import events.around.android.CityPage
 import events.around.android.EventDetail
 import events.around.android.Events
 import events.around.android.OrganizerPage
 import events.around.android.Search
 import events.around.android.Settings
+import events.around.android.city.cityGradient
 import events.around.android.home.HeaderAction
 import events.around.android.home.HeaderActions
 import events.around.android.ui.components.Avatar
@@ -78,13 +81,6 @@ private const val SHELF_PEEK_DP = 60
 
 private val TAB_BAR_SPACE = 100.dp
 private val ShadeEnd = Color.Black.copy(alpha = 0.45f)
-
-private val CityGradients = listOf(
-    listOf(Color(0xFF5856D6), Color(0xFFAF52DE)),
-    listOf(Color(0xFF30B0C7), Color(0xFF007AFF)),
-    listOf(Color(0xFFFF9500), Color(0xFFFF2D55)),
-    listOf(Color(0xFF34C759), Color(0xFF30B0C7)),
-)
 
 /** Discover as in the designs: the city's upcoming events, categories, cities and organizers. */
 @Composable
@@ -145,8 +141,9 @@ fun DiscoverScreen(
                             CityCarousel(
                                 state.cities,
                                 state.city?.slug,
-                                viewModel::selectCity,
-                                Modifier.padding(top = 33.dp),
+                                onOpenAll = { navigate(Cities) },
+                                onSelect = { navigate(CityPage(it)) },
+                                modifier = Modifier.padding(top = 33.dp),
                             )
                         }
                     }
@@ -312,12 +309,13 @@ private fun CategoryChip(
 private fun CityCarousel(
     cities: List<City>,
     current: String?,
+    onOpenAll: () -> Unit,
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAroundStrings.current
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        SectionTitle(strings.discoverCities)
+        SectionTitle(strings.discoverCities, onClick = onOpenAll)
         LazyRow(
             contentPadding = PaddingValues(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(9.dp),
@@ -328,7 +326,7 @@ private fun CityCarousel(
                     Modifier
                         .size(174.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Brush.linearGradient(CityGradients[index % CityGradients.size]))
+                        .background(Brush.linearGradient(cityGradient(index)))
                         .clickable { onSelect(city.slug) },
                 ) {
                     Box(

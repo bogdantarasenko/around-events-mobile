@@ -1,16 +1,17 @@
 import AroundKit
 import SwiftUI
 
-/// "Cities": 174pt square cards with a shade at the bottom, an icon in a translucent circle and the name.
+/// "Cities ›": 174pt square cards, each opening the city's page with a shade at the bottom, an icon in a translucent circle and the name.
 struct CityCarousel: View {
     let cities: [City]
     let current: String?
+    let onOpenAll: () -> Void
     let onSelect: (String) -> Void
     @Environment(\.strings) private var strings
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            SectionTitle(title: strings.discoverCities)
+            SectionTitle(title: strings.discoverCities, action: onOpenAll)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 9) {
                     ForEach(Array(cities.enumerated()), id: \.element.slug) { index, city in
@@ -29,9 +30,8 @@ struct CityCarousel: View {
 
     // No city photos on the backend: a gradient per city stands in for them, under the same shade.
     private func card(_ city: City, index: Int) -> some View {
-        let colors: [[Color]] = [[.indigo, .purple], [.teal, .blue], [.orange, .pink], [.green, .teal]]
-        return ZStack(alignment: .topLeading) {
-            LinearGradient(colors: colors[index % colors.count], startPoint: .topLeading, endPoint: .bottomTrailing)
+        ZStack(alignment: .topLeading) {
+            LinearGradient(colors: CityStyle.colors(index), startPoint: .topLeading, endPoint: .bottomTrailing)
             LinearGradient(colors: [.clear, .black.opacity(0.45)], startPoint: .center, endPoint: .bottom)
             Image(systemName: city.slug == current ? "checkmark" : "building.columns")
                 .font(.system(size: 17, weight: .semibold))

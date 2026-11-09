@@ -11,7 +11,7 @@ struct EventsScreen: View {
 
     init(category: String?, path: Binding<[AppRoute]>) {
         _path = path
-        _store = StateObject(wrappedValue: VMStoreOwner(Deps.shared.getEventsViewModel(category: category)))
+        _store = StateObject(wrappedValue: VMStoreOwner(Deps.shared.getEventsViewModel(category: category, citySlug: nil)))
     }
 
     var body: some View {
@@ -31,6 +31,17 @@ struct EventsScreen: View {
             }
             if state.category != nil, !state.organizers.isEmpty {
                 organizers(state)
+            }
+            if state.category != nil {
+                VStack(alignment: .leading, spacing: 0) {
+                    Rectangle().fill(Palette.chipBorder).frame(height: 0.5).padding(.horizontal, -20)
+                    Text(strings.discoverUpcoming)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(Palette.ink)
+                        .padding(.top, 18)
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 0, trailing: 20))
+                .listRowSeparator(.hidden)
             }
             if state.isLoading {
                 ProgressView().frame(maxWidth: .infinity).listRowSeparator(.hidden)
@@ -56,23 +67,36 @@ struct EventsScreen: View {
         VStack(alignment: .leading, spacing: 10) {
             if let category = state.category {
                 Image(systemName: CategoryStyle.symbol(category))
-                    .font(.system(size: 26, weight: .medium))
+                    .font(.system(size: 22, weight: .medium))
                     .foregroundStyle(CategoryStyle.tint(category))
-                    .frame(width: 64, height: 64)
+                    .frame(width: 52, height: 52)
                     .background(CategoryStyle.tint(category).opacity(0.16), in: Circle())
             }
             Text(state.category.map { Labels.category($0, strings) } ?? state.city?.name ?? strings.allEvents)
                 .font(.system(size: 28, weight: .bold))
+                .tracking(0.36)
                 .foregroundStyle(Palette.ink)
-            Text(strings.eventsCount("\(state.count)"))
-                .font(.system(size: 15))
-                .foregroundStyle(Palette.secondary)
+                .padding(.top, 2)
+            countLine(state)
         }
-        .padding(.vertical, 8)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+    }
+
+    // "3K Events" in the designs: the number in ink, the word in grey.
+    private func countLine(_ state: EventsUiState) -> some View {
+        let label = strings.eventsCount("\(state.count)")
+        let number = "\(state.count)"
+        let word = label.replacingOccurrences(of: number, with: "").trimmingCharacters(in: CharacterSet(charactersIn: ": ")).lowercased()
+        return (Text(number).foregroundStyle(Palette.ink).fontWeight(.medium) + Text(" " + word).foregroundStyle(Palette.secondary))
+            .font(.system(size: 15))
     }
 
     @ViewBuilder
     private func organizers(_ state: EventsUiState) -> some View {
+        Rectangle().fill(Palette.chipBorder).frame(height: 0.5)
+            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 0))
+            .listRowSeparator(.hidden)
         Text(strings.discoverOrganizers)
             .font(.system(size: 20, weight: .semibold))
             .foregroundStyle(Palette.ink)

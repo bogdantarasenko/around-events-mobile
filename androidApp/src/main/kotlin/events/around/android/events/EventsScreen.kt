@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,8 +25,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import events.around.android.EventDetail
@@ -40,6 +45,7 @@ import events.around.android.ui.components.eventDays
 import events.around.android.ui.format.categoryLabel
 import events.around.android.ui.format.text
 import events.around.android.ui.strings.LocalAroundStrings
+import events.around.android.ui.theme.AroundColors
 import events.around.shared.presentation.feed.EventsUiState
 import events.around.shared.presentation.feed.EventsViewModel
 
@@ -113,6 +119,20 @@ fun EventsScreen(
                         )
                     }
                 }
+                if (state.category != null) {
+                    item {
+                        Column(Modifier.padding(top = 8.dp)) {
+                            Box(Modifier.fillMaxWidth().height(0.5.dp).background(AroundColors.chipBorder))
+                            Text(
+                                strings.discoverUpcoming,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AroundColors.ink,
+                                modifier = Modifier.padding(top = 18.dp),
+                            )
+                        }
+                    }
+                }
                 eventDays(state.days) { onOpen(EventDetail(it)) }
             }
         }
@@ -125,7 +145,7 @@ private fun Header(state: EventsUiState) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         state.category?.let { category ->
             Box(
-                Modifier.size(64.dp).clip(CircleShape).background(categoryTint(category).copy(alpha = 0.18f)),
+                Modifier.size(52.dp).clip(CircleShape).background(categoryTint(category).copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -141,6 +161,16 @@ private fun Header(state: EventsUiState) {
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
         )
-        Text(strings.eventsCount("${state.count}"), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // "3K Events" in the designs: the number in ink, the word in grey.
+        val word = strings.eventsCount("${state.count}").replace("${state.count}", "").trim(' ', ':').lowercase()
+        Text(
+            buildAnnotatedString {
+                withStyle(
+                    SpanStyle(color = AroundColors.ink, fontWeight = FontWeight.Medium),
+                ) { append("${state.count}") }
+                withStyle(SpanStyle(color = AroundColors.secondary)) { append(" $word") }
+            },
+            fontSize = 15.sp,
+        )
     }
 }

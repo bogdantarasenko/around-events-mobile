@@ -91,4 +91,10 @@
     <string name="tab_home">Главная</string>
     <string name="tab_discover">Обзор</string>
     <string name="tab_map">Карта</string>
+    <string name="cities_intro">Выберите город, чтобы посмотреть его афишу и сделать своим.</string>
+    <string name="city_whats_on">Что происходит в</string>
+    <string name="city_make_current">Сделать моим городом</string>
+    <string name="city_is_current">Мой город</string>
+    <string name="settings_preferences">Предпочтения</string>
+    <string name="settings_resources">Полезное</string>
 </resources>

@@ -28,7 +28,7 @@ struct HomeScreen: View {
         .onAppear(perform: openFromLaunchArguments)
     }
 
-    // Debug builds only: `-AroundTab discover|map` and `-AroundRoute event:<id>|organizer:<slug>|events:<category>`
+    // Debug builds only: `-AroundTab discover|map` and `-AroundRoute event:<id>|organizer:<slug>|events:<category>|city:<slug>|cities|search|settings`
     // open a screen at launch, so the simulator can be checked without tapping.
     private func openFromLaunchArguments() {
         #if DEBUG
@@ -38,13 +38,16 @@ struct HomeScreen: View {
         case "map": tab = .map
         default: break
         }
-        guard let route = defaults.string(forKey: "AroundRoute")?.split(separator: ":", maxSplits: 1),
-              route.count == 2 else { return }
-        let value = String(route[1])
+        guard let route = defaults.string(forKey: "AroundRoute")?.split(separator: ":", maxSplits: 1) else { return }
+        let value = route.count == 2 ? String(route[1]) : ""
         let target: AppRoute? = switch route[0] {
         case "event": Int64(value).map { .eventDetail($0) }
         case "organizer": .organizer(slug: value)
         case "events": .events(category: value)
+        case "city": .city(slug: value)
+        case "cities": .cities
+        case "search": .search
+        case "settings": .settings
         default: nil
         }
         if let target { homePath.append(target) }
@@ -72,10 +75,12 @@ struct HomeScreen: View {
                     switch route {
                     case let .eventDetail(id): EventDetailScreen(eventId: id, path: path)
                     case let .events(category): EventsScreen(category: category, path: path)
+                    case .cities: CitiesScreen(discover: discoverStore.instance, path: path)
+                    case let .city(slug): CityScreen(slug: slug, path: path)
                     case let .organizer(slug): OrganizerScreen(slug: slug, path: path)
                     case .map: MapScreen(path: path)
-                    case .search: SearchScreen()
-                    case .settings: SettingsScreen()
+                    case .search: SearchScreen(path: path)
+                    case .settings: SettingsScreen(path: path)
                     }
                 }
         }

@@ -74,7 +74,9 @@ struct DiscoverScreen: View {
                     .padding(.top, 21)
             }
             if state.cities.count > 1 {
-                CityCarousel(cities: state.cities, current: state.city?.slug) { viewModel.selectCity(slug: $0) }
+                CityCarousel(cities: state.cities, current: state.city?.slug, onOpenAll: { path.append(.cities) }) {
+                    path.append(.city(slug: $0))
+                }
                     .padding(.top, 33)
             }
             if !state.organizers.isEmpty {

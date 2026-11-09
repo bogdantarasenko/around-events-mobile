@@ -24,3 +24,10 @@ data class Events(val category: String? = null) : NavKey
 
 @Serializable
 data class OrganizerPage(val slug: String) : NavKey
+
+@Serializable
+data object Cities : NavKey
+
+/** A city's page, which may not be the city the app reads. */
+@Serializable
+data class CityPage(val slug: String) : NavKey

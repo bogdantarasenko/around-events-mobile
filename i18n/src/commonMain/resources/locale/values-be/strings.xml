@@ -91,4 +91,10 @@
     <string name="tab_home">Галоўная</string>
     <string name="tab_discover">Агляд</string>
     <string name="tab_map">Мапа</string>
+    <string name="cities_intro">Абярыце горад, каб паглядзець яго афішу і зрабіць сваім.</string>
+    <string name="city_whats_on">Што адбываецца ў</string>
+    <string name="city_make_current">Зрабіць маім горадам</string>
+    <string name="city_is_current">Мой горад</string>
+    <string name="settings_preferences">Налады</string>
+    <string name="settings_resources">Карысна</string>
 </resources>

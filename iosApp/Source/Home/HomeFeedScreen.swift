@@ -8,7 +8,7 @@ struct HomeFeedScreen: View {
     @Binding var path: [AppRoute]
     @Environment(\.strings) private var strings
     @Environment(\.openURL) private var openURL
-    @StateObject private var store = VMStoreOwner<EventsViewModel>(Deps.shared.getEventsViewModel(category: nil))
+    @StateObject private var store = VMStoreOwner<EventsViewModel>(Deps.shared.getEventsViewModel(category: nil, citySlug: nil))
     @State private var state: EventsUiState?
     @State private var cities: DiscoverUiState?
 

@@ -14,6 +14,8 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import events.around.android.city.CitiesScreen
+import events.around.android.city.CityScreen
 import events.around.android.discover.DiscoverScreen
 import events.around.android.event.EventDetailScreen
 import events.around.android.events.EventsScreen
@@ -82,7 +84,9 @@ class MainActivity : ComponentActivity() {
                         when (tab) {
                             HomeTab.Home -> HomeFeedScreen(
                                 discover = discover,
-                                events = koinViewModel<EventsViewModel>(key = "events-home") { parametersOf(null) },
+                                events = koinViewModel<EventsViewModel>(
+                                    key = "events-home",
+                                ) { parametersOf(null, null) },
                                 navigate = { backStack.add(it) },
                             )
                             HomeTab.Discover -> DiscoverScreen(
@@ -100,9 +104,22 @@ class MainActivity : ComponentActivity() {
                 }
                 entry<Events> { route ->
                     val viewModel = koinViewModel<EventsViewModel>(key = "events-${route.category}") {
-                        parametersOf(route.category)
+                        parametersOf(route.category, null)
                     }
                     EventsScreen(viewModel, navigateBack, onOpen = { backStack.add(it) })
+                }
+                entry<Cities> {
+                    CitiesScreen(
+                        koinViewModel<DiscoverViewModel>(),
+                        navigateBack,
+                        onOpenCity = { backStack.add(CityPage(it)) },
+                    )
+                }
+                entry<CityPage> { route ->
+                    val viewModel = koinViewModel<EventsViewModel>(key = "city-${route.slug}") {
+                        parametersOf(null, route.slug)
+                    }
+                    CityScreen(viewModel, navigateBack, onOpenEvent = { backStack.add(EventDetail(it)) })
                 }
                 entry<OrganizerPage> { route ->
                     val viewModel = koinViewModel<OrganizerViewModel>(key = "organizer-${route.slug}") {

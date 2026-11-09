@@ -92,4 +92,10 @@
     <string name="tab_home">Home</string>
     <string name="tab_discover">Discover</string>
     <string name="tab_map">Map</string>
+    <string name="cities_intro">Pick a city to see what\'s on there and make it yours.</string>
+    <string name="city_whats_on">What\'s happening in</string>
+    <string name="city_make_current">Make it my city</string>
+    <string name="city_is_current">My city</string>
+    <string name="settings_preferences">Preferences</string>
+    <string name="settings_resources">Resources</string>
 </resources>

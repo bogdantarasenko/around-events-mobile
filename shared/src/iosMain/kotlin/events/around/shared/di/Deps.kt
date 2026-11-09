@@ -37,8 +37,9 @@ object Deps : KoinComponent {
 
     fun getSearchViewModel(): SearchViewModel = get()
 
-    /** [category] null is the whole listing. */
-    fun getEventsViewModel(category: String?): EventsViewModel = get { parametersOf(category) }
+    /** [category] null is the whole listing; [citySlug] null is the chosen city. */
+    fun getEventsViewModel(category: String?, citySlug: String?): EventsViewModel =
+        get { parametersOf(category, citySlug) }
 
     fun getOrganizerViewModel(slug: String): OrganizerViewModel = get { parametersOf(slug) }
 
