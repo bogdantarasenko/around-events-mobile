@@ -23,6 +23,11 @@ settings:
     SDKROOT: iphoneos
     FRAMEWORK_SEARCH_PATHS: "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
 
+packages:
+  MapLibre:
+    url: https://github.com/maplibre/maplibre-gl-native-distribution
+    exactVersion: 6.31.0
+
 knownRegions:
   - en
   - uk
@@ -63,6 +68,7 @@ targets:
         buildPhase: none
     dependencies:
       - target: AroundKitBuilder
+      - package: MapLibre
     settings:
       base:
         PRODUCT_NAME: $(TARGET_NAME)

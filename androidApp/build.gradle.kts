@@ -31,6 +31,8 @@ android {
         versionCode = appVersionCode()
         versionName = appVersionName()
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
+        // OpenFreeMap: free vector tiles from OpenStreetMap data, no key.
+        buildConfigField("String", "MAP_STYLE_URL", "\"https://tiles.openfreemap.org/styles/liberty\"")
     }
 
     buildFeatures {
@@ -115,7 +117,7 @@ dependencies {
     implementation(libs.io.coil.compose)
     implementation(libs.io.coil.network)
     implementation(libs.androidx.browser)
-    implementation(libs.osmdroid)
+    implementation(libs.maplibre)
 
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)

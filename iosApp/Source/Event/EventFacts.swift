@@ -1,5 +1,4 @@
 import AroundKit
-import MapKit
 import SwiftUI
 
 /// Location with a map, price, organizer, languages, repeats and the description — in the designs' sections.
@@ -58,12 +57,9 @@ struct EventFacts: View {
                             Text(address).font(.system(size: 16)).foregroundStyle(Color(white: 0.7))
                         }
                     }
-                    if let lat = event.latitude?.doubleValue, let lon = event.longitude?.doubleValue {
-                        let point = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                        Map(initialPosition: .region(MKCoordinateRegion(center: point, latitudinalMeters: 800, longitudinalMeters: 800))) {
-                            Marker(event.venue ?? event.title, coordinate: point)
-                        }
-                        .frame(height: 140)
+                    if let place = MapPlace.group([event]).first {
+                        MapLibreMap(places: [place], interactive: false)
+                            .frame(height: 140)
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                         .allowsHitTesting(false)
                     }

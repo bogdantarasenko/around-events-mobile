@@ -27,6 +27,8 @@
 		<string>ru</string>
 		<string>be</string>
 	</array>
+	<key>AroundMapStyleURL</key>
+	<string>https://tiles.openfreemap.org/styles/liberty</string>
 	<key>AroundBaseURL</key>
 	<string>$(AROUND_BASE_URL)</string>
 	<key>AroundIsDebug</key>

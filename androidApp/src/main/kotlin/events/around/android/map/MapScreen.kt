@@ -17,37 +17,32 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.NearMe
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import events.around.android.ui.components.EventRow
 import events.around.android.ui.strings.LocalAroundStrings
-import events.around.core.model.Event
 import events.around.shared.presentation.feed.MapUiState
 import events.around.shared.presentation.feed.MapViewModel
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.BoundingBox
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
 
 private const val SHEET_FRACTION = 0.38f
 private val SHEET_BOTTOM = 78.dp
-private const val BOUNDS_PADDING_PX = 120
-private const val SINGLE_PLACE_ZOOM = 15.0
+private val MAP_SIDE_PADDING = 40.dp
 
 /** The city's events on an OpenStreetMap map, the list in a panel below. */
 @Composable
@@ -61,7 +56,33 @@ fun MapScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val strings = LocalAroundStrings.current
     Box(modifier.fillMaxSize()) {
-        EventsMap(state.events, onSelect = viewModel::select, modifier = Modifier.fillMaxSize())
+        val density = LocalDensity.current
+        val sheetHeight = (LocalConfiguration.current.screenHeightDp * SHEET_FRACTION).dp
+        val bottom = with(density) { (sheetHeight + SHEET_BOTTOM).roundToPx() }
+        val side = with(density) { MAP_SIDE_PADDING.roundToPx() }
+        var fitToken by remember { mutableIntStateOf(0) }
+        MapLibreMap(
+            events = state.events,
+            padding = MapPadding(left = side, top = side * 2, right = side, bottom = bottom),
+            fitToken = fitToken,
+            onSelect = viewModel::select,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Surface(
+            shape = CircleShape,
+            shadowElevation = 3.dp,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .navigationBarsPadding()
+                .padding(end = 22.dp, bottom = sheetHeight + SHEET_BOTTOM + 12.dp),
+        ) {
+            IconButton(onClick = {
+                viewModel.clearSelection()
+                fitToken++
+            }) {
+                Icon(Icons.Outlined.NearMe, contentDescription = strings.mapTitle)
+            }
+        }
         if (navigateBack != null) {
             Surface(
                 shape = CircleShape,
@@ -85,58 +106,6 @@ fun MapScreen(
                 .fillMaxHeight(SHEET_FRACTION),
         )
     }
-}
-
-/** One marker per place: events at one venue share it, and tapping it lists them below. */
-@Composable
-private fun EventsMap(
-    events: List<Event>,
-    onSelect: (List<Long>) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val map = remember {
-        MapView(context).apply {
-            setTileSource(TileSourceFactory.MAPNIK)
-            setMultiTouchControls(true)
-            zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
-        }
-    }
-    DisposableEffect(map) { onDispose { map.onDetach() } }
-    AndroidView(
-        factory = { map },
-        modifier = modifier,
-        update = { view ->
-            view.overlays.clear()
-            val places = events.groupBy { "%.4f,%.4f".format(java.util.Locale.ROOT, it.latitude, it.longitude) }.values
-            val points = places.mapNotNull { placed ->
-                val first = placed.first()
-                val point = GeoPoint(
-                    first.latitude ?: return@mapNotNull null,
-                    first.longitude ?: return@mapNotNull null,
-                )
-                view.overlays += Marker(view).apply {
-                    position = point
-                    title = if (placed.size > 1) "${first.title} +${placed.size - 1}" else first.title
-                    setOnMarkerClickListener { _, _ ->
-                        onSelect(placed.map { it.id })
-                        true
-                    }
-                }
-                point
-            }
-            when {
-                points.size > 1 -> view.post {
-                    view.zoomToBoundingBox(BoundingBox.fromGeoPoints(points), false, BOUNDS_PADDING_PX)
-                }
-                points.size == 1 -> {
-                    view.controller.setZoom(SINGLE_PLACE_ZOOM)
-                    view.controller.setCenter(points.first())
-                }
-            }
-            view.invalidate()
-        },
-    )
 }
 
 @Composable

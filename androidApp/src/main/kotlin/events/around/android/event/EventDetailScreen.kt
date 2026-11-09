@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import events.around.android.map.MapLibreMap
 import events.around.android.ui.components.Avatar
 import events.around.android.ui.components.EventThumb
 import events.around.android.ui.components.categoryTint
@@ -70,6 +71,7 @@ private val Backdrop = Color(0xFF696969)
 private val Muted = Color(0xFFB3B3B3)
 private val Glass = Color.White.copy(alpha = 0.18f)
 private const val MAX_ACTIONS = 3
+private val MAP_PREVIEW_HEIGHT = 140.dp
 private val DividerThickness = 0.8.dp
 private val SectionLabel = Color(0xFFAFAFAF)
 private const val SCREEN_MARGINS_DP = 40
@@ -296,6 +298,13 @@ private fun Location(event: Event) {
     Section(strings.detailLocation) {
         event.venue?.let { Text(it, color = Color.White, fontWeight = FontWeight.Medium) }
         event.address?.let { Text(it, color = Muted) }
+        if (event.latitude != null && event.longitude != null) {
+            MapLibreMap(
+                events = listOf(event),
+                interactive = false,
+                modifier = Modifier.fillMaxWidth().height(MAP_PREVIEW_HEIGHT).clip(RoundedCornerShape(18.dp)),
+            )
+        }
         TextButton(onClick = { context.openExternal(geoUri(event, place)) }) {
             Text(strings.openMap)
         }

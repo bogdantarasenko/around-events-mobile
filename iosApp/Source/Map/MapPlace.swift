@@ -1,5 +1,5 @@
 import AroundKit
-import MapKit
+import CoreLocation
 
 /// Events at one point on the map: several events at one venue share a pin.
 struct MapPlace: Identifiable {

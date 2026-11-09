@@ -18,7 +18,7 @@ organizer cabinet, editing an organizer page — and links to the mini-app for t
 - `core/` — domain models, no platform code
 - `i18n/` — strings (en default, uk, ru, be) in `src/commonMain/resources/locale/values-*/strings.xml`
 - `shared/` — repositories, network, ViewModels, Koin DI; iOS framework `AroundKit`
-- `androidApp/` — Compose UI, Navigation 3; the map is osmdroid (OpenStreetMap, no API key)
+- `androidApp/` — Compose UI, Navigation 3
 - `iosApp/` — SwiftUI; `Around.xcodeproj` is generated from `project.yml` and not committed
 - `build-logic/` — convention plugins `events.around.library`, `.detekt`, `.versioning`
 
@@ -66,6 +66,13 @@ library is pinned to lifecycle 2.10.0).
 Every answer is cached in settings: `cities`, `feed_<slug>`, `organizers_<slug>`, `organizer_<slug>`. To see the
 offline state in the simulator, open the app once online, then rebuild against an unreachable server
 (`xcodebuild … 'AROUND_BASE_URL=http://127.0.0.1:9' build`): the cached listing shows with the offline banner.
+
+## Maps
+
+Both platforms use MapLibre (iOS: SPM `maplibre-gl-native-distribution`; Android: `org.maplibre.gl:android-sdk`) on
+the OpenFreeMap style `https://tiles.openfreemap.org/styles/liberty` — free, no key. The style URL is
+`AroundMapStyleURL` in `iosApp/Info.plist` and `BuildConfig.MAP_STYLE_URL` on Android. Keep the OpenStreetMap
+attribution button visible.
 
 ## Opening a screen in the simulator
 
