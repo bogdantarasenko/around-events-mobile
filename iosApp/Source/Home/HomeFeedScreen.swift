@@ -54,11 +54,11 @@ struct HomeFeedScreen: View {
 
     private func header(_ cities: DiscoverUiState) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white)
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
                 .frame(width: 44, height: 44)
-                .background(Color.accentColor, in: Circle())
+                .accessibilityHidden(true)
             Menu {
                 Picker(strings.feedCity, selection: Binding(
                     get: { cities.city?.slug ?? "" },

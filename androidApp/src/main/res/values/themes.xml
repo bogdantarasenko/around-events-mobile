@@ -6,5 +6,5 @@
     </style>
 
     <color name="window_background">#FFFFFFFF</color>
-    <color name="ic_launcher_background">#FF1F1F24</color>
+    <color name="ic_launcher_background">#FFFFFFFF</color>
 </resources>
