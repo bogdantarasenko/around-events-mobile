@@ -70,9 +70,9 @@
     <string name="category_creative">Workshops</string>
     <string name="category_learning">Learning</string>
     <string name="discover_upcoming">Upcoming events</string>
-    <string name="discover_categories">Browse by category</string>
     <string name="discover_cities">Cities</string>
     <string name="discover_organizers">Organizers</string>
+    <string name="discover_organizers_empty">No organizers have a public page in this city yet.</string>
     <string name="all_events">All events</string>
     <string name="events_count">Events: %s</string>
     <string name="past_count">Held: %s</string>

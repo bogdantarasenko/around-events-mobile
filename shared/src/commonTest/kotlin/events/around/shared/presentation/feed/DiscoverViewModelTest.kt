@@ -66,7 +66,8 @@ class DiscoverViewModelTest {
                     val body = when {
                         path.endsWith("/krakow/events") -> listing("krakow", "music")
                         path.endsWith("/warsaw/events") -> listing("warsaw", "sport")
-                        path.endsWith("/organizers") -> ORGANIZERS
+                        path.endsWith("/krakow/organizers") -> ORGANIZERS
+                        path.endsWith("/organizers") -> """{"data":[]}"""
                         else -> CITIES
                     }
                     respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -88,8 +89,8 @@ class DiscoverViewModelTest {
 
         with(viewModel.state.value) {
             assertEquals("krakow", city?.slug)
-            assertEquals("music", categories.single().key)
             assertEquals("Дом", organizers.single().name)
+            assertEquals(false, isLoading)
         }
     }
 
@@ -101,11 +102,15 @@ class DiscoverViewModelTest {
         viewModel.selectCity("warsaw")
         advanceUntilIdle()
 
-        assertEquals("sport", viewModel.state.value.categories.single().key)
+        assertEquals(emptyList(), viewModel.state.value.organizers)
         assertEquals("warsaw", settings.getStringOrNull("city"))
         assertEquals(
             listOf("/api/cities/krakow/events", "/api/cities/warsaw/events"),
             requested.filter { it.endsWith("/events") },
+        )
+        assertEquals(
+            listOf("/api/cities/krakow/organizers", "/api/cities/warsaw/organizers"),
+            requested.filter { it.endsWith("/organizers") },
         )
     }
 
@@ -119,7 +124,8 @@ class DiscoverViewModelTest {
         advanceUntilIdle()
 
         with(offline.state.value) {
-            assertEquals("music", categories.single().key)
+            assertEquals("Дом", organizers.single().name)
+            assertEquals(false, isLoading)
             assertEquals(ErrorKind.Offline, error?.kind)
         }
     }

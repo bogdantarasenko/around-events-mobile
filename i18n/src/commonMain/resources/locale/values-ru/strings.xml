@@ -69,9 +69,9 @@
     <string name="category_creative">Творчество</string>
     <string name="category_learning">Обучение</string>
     <string name="discover_upcoming">Ближайшие события</string>
-    <string name="discover_categories">По рубрикам</string>
     <string name="discover_cities">Города</string>
     <string name="discover_organizers">Организаторы</string>
+    <string name="discover_organizers_empty">В этом городе пока ни у кого нет публичной страницы.</string>
     <string name="all_events">Все события</string>
     <string name="events_count">Событий: %s</string>
     <string name="past_count">Проведено: %s</string>

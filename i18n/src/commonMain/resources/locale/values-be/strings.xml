@@ -69,9 +69,9 @@
     <string name="category_creative">Творчасць</string>
     <string name="category_learning">Навучанне</string>
     <string name="discover_upcoming">Бліжэйшыя падзеі</string>
-    <string name="discover_categories">Па рубрыках</string>
     <string name="discover_cities">Гарады</string>
     <string name="discover_organizers">Арганізатары</string>
+    <string name="discover_organizers_empty">У гэтым горадзе пакуль ні ў кога няма публічнай старонкі.</string>
     <string name="all_events">Усе падзеі</string>
     <string name="events_count">Падзей: %s</string>
     <string name="past_count">Праведзена: %s</string>

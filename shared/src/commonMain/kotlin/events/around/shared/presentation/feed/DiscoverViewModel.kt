@@ -7,8 +7,6 @@ import events.around.core.model.Organizer
 import events.around.shared.data.city.CitiesRepository
 import events.around.shared.data.feed.FeedRepository
 import events.around.shared.data.organizers.OrganizersRepository
-import events.around.shared.domain.feed.CategoryCount
-import events.around.shared.domain.feed.categoryCounts
 import events.around.shared.presentation.Refresher
 import events.around.shared.presentation.UiError
 import kotlinx.coroutines.async
@@ -25,7 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Discover: the city's categories, the other cities and the organizers. It also loads the city's listing for
+ * The city and its organizers: Discover shows them, Home switches the city. It also loads the city's listing for
  * every other screen, so it lives as long as the app.
  */
 class DiscoverViewModel(
@@ -50,12 +48,10 @@ class DiscoverViewModel(
         DiscoverUiState(
             city = current,
             cities = allCities.orEmpty(),
-            categories = events?.let(::categoryCounts).orEmpty(),
             organizers = cityOrganizers.orEmpty(),
             // Nothing cached to show meanwhile: the first start, or a city never opened on this device.
-            isLoading = events == null && (isRefreshing || lastError == null),
+            isLoading = (events == null || cityOrganizers == null) && (isRefreshing || lastError == null),
             isRefreshing = isRefreshing,
-            isEmpty = events?.isEmpty() == true,
             error = lastError,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, DiscoverUiState(isLoading = true))
@@ -93,12 +89,12 @@ class DiscoverViewModel(
         }
     }
 
-    // The organizers are extra: the screen stands without them, so their failure isn't the screen's error.
+    // Both at once; the listing's failure is reported first, as Home is what shows while they load.
     private fun load(citySlug: String) = refresher.run {
         coroutineScope {
             val extra = async { runCatching { organizers.refreshCity(citySlug) } }
             feed.refresh(citySlug)
-            extra.await()
+            extra.await().getOrThrow()
         }
     }
 }
@@ -106,11 +102,8 @@ class DiscoverViewModel(
 data class DiscoverUiState(
     val city: City? = null,
     val cities: List<City> = emptyList(),
-    val categories: List<CategoryCount> = emptyList(),
     val organizers: List<Organizer> = emptyList(),
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
-    /** Loaded, and the city has no upcoming events at all. */
-    val isEmpty: Boolean = false,
     val error: UiError? = null,
 )

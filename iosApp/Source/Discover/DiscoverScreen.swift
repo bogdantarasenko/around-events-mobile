@@ -1,8 +1,8 @@
 import AroundKit
 import SwiftUI
 
-/// Discover: the way around the city — its categories, the other cities and the organizers. The listing itself
-/// lives on the Home tab, so nothing here repeats it.
+/// Discover: the Home bar — logo, city, settings — over the city's organizers instead of its events. Each row
+/// opens the organizer's page.
 struct DiscoverScreen: View {
     let viewModel: DiscoverViewModel
     @Binding var path: [AppRoute]
@@ -11,55 +11,46 @@ struct DiscoverScreen: View {
 
     var body: some View {
         let state = state ?? viewModel.state.value
-        ScrollView {
-            VStack(alignment: .leading, spacing: 32) {
-                content(state)
+        List {
+            if let error = state.error {
+                ErrorBanner(message: Labels.error(error, strings), actionLabel: strings.retry) { viewModel.refresh() }
+                    .listRowSeparator(.hidden)
             }
-            .padding(.top, 4)
-            .padding(.bottom, 24)
+            if state.isLoading {
+                ProgressView().frame(maxWidth: .infinity).padding(.top, 60).listRowSeparator(.hidden)
+            } else if state.organizers.isEmpty {
+                Text(strings.discoverOrganizersEmpty)
+                    .foregroundStyle(Palette.secondary)
+                    .padding(.top, 8)
+                    .listRowSeparator(.hidden)
+            }
+            ForEach(Array(state.organizers.enumerated()), id: \.element.slug) { index, organizer in
+                ZStack {
+                    NavigationLink(value: AppRoute.organizer(slug: organizer.slug)) { EmptyView() }.opacity(0)
+                    OrganizerRow(organizer: organizer, showsSeparator: index < state.organizers.count - 1)
+                }
+                .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+                .listRowSeparator(.hidden)
+            }
         }
-        .scrollIndicators(.hidden)
-        .refreshable { viewModel.refresh() }
-        .navigationTitle(strings.tabDiscover)
+        .listStyle(.plain)
+        .navigationTitle(strings.discoverOrganizers)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
+            ToolbarItem(placement: .topBarLeading) { CityBrandMenu(state: state) { viewModel.selectCity(slug: $0) } }
+                .hidingSharedBackground()
+            ToolbarItemGroup(placement: .topBarTrailing) {
                 Button { path.append(.search) } label: { Image(systemName: "magnifyingglass") }
                     .accessibilityLabel(strings.searchPlaceholder)
+                Button { path.append(.settings) } label: { Image(systemName: "gearshape") }
+                    .accessibilityLabel(strings.settingsTitle)
             }
         }
+        .refreshable { viewModel.refresh() }
         .task {
             for await value in viewModel.state {
                 self.state = value
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func content(_ state: DiscoverUiState) -> some View {
-        if state.isLoading {
-            ProgressView().frame(maxWidth: .infinity, minHeight: 300)
-        } else if state.categories.isEmpty, state.isEmpty || state.error != nil {
-            ContentUnavailableView {
-                Label(strings.feedEmptyTitle, systemImage: "calendar")
-            } description: {
-                Text(state.error.map { Labels.error($0, strings) } ?? strings.feedEmptyText)
-            } actions: {
-                if state.error != nil { Button(strings.retry) { viewModel.refresh() } }
-            }
-            .frame(minHeight: 400)
-        } else {
-            if let error = state.error {
-                ErrorBanner(message: Labels.error(error, strings), actionLabel: strings.retry) { viewModel.refresh() }
-                    .padding(.horizontal, 20)
-            }
-            CategoryTiles(categories: state.categories) { path.append(.events(category: $0)) }
-            if state.cities.count > 1 {
-                CityCarousel(cities: state.cities, current: state.city?.slug, onOpenAll: { path.append(.cities) }) {
-                    path.append(.city(slug: $0))
-                }
-            }
-            if !state.organizers.isEmpty {
-                OrganizerList(organizers: state.organizers) { path.append(.organizer(slug: $0)) }
             }
         }
     }
