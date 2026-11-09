@@ -9,6 +9,8 @@ struct MapLibreMap: UIViewRepresentable {
     /// Room left for overlays when framing the places, such as the events card under the map.
     var padding = UIEdgeInsets(top: 80, left: 40, bottom: 80, right: 40)
     var fitToken = 0
+    /// Changing it shows the person's location and follows it; the first time, iOS asks for permission.
+    var locateToken = 0
     var onSelect: ([Int64]) -> Void = { _ in }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -17,13 +19,15 @@ struct MapLibreMap: UIViewRepresentable {
         let map = MLNMapView(frame: .zero, styleURL: Self.styleURL)
         map.delegate = context.coordinator
         map.isUserInteractionEnabled = interactive
-        map.isRotateEnabled = false
         map.isPitchEnabled = false
-        map.compassView.isHidden = true
-        // The card and the tab bar cover the bottom corners; the OpenStreetMap credit must stay visible.
+        map.isRotateEnabled = interactive
+        // The compass appears when the map is turned, as in Apple's maps; it sits under the map controls.
+        map.compassViewPosition = .topLeft
+        map.compassViewMargins = CGPoint(x: 16, y: 16)
         map.logoView.isHidden = true
-        map.attributionButtonPosition = .topRight
-        map.attributionButtonMargins = CGPoint(x: 12, y: interactive ? 56 : 6)
+        // The OpenStreetMap credit must stay visible: above the tab bar, away from the list button.
+        map.attributionButtonPosition = .bottomLeft
+        map.attributionButtonMargins = CGPoint(x: 12, y: interactive ? 12 : 6)
         return map
     }
 
@@ -36,9 +40,15 @@ struct MapLibreMap: UIViewRepresentable {
             map.addAnnotations(places.map(PlaceAnnotation.init))
             context.coordinator.fit(map, animated: false)
         } else if fitToken != context.coordinator.fitToken {
+            map.userTrackingMode = .none
             context.coordinator.fit(map, animated: true)
         }
         context.coordinator.fitToken = fitToken
+        if locateToken != context.coordinator.locateToken {
+            context.coordinator.locateToken = locateToken
+            map.showsUserLocation = true
+            map.setUserTrackingMode(.follow, animated: true, completionHandler: nil)
+        }
     }
 
     private static var styleURL: URL? {
@@ -49,6 +59,7 @@ struct MapLibreMap: UIViewRepresentable {
         var parent: MapLibreMap
         var shownIds: [String] = []
         var fitToken = 0
+        var locateToken = 0
 
         init(_ parent: MapLibreMap) {
             self.parent = parent

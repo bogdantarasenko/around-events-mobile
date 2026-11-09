@@ -97,4 +97,8 @@
     <string name="city_is_current">Мой город</string>
     <string name="settings_preferences">Предпочтения</string>
     <string name="settings_resources">Полезное</string>
+    <string name="map_list">Список</string>
+    <string name="map_my_location">Моё местоположение</string>
+    <string name="map_show_all">Показать все события</string>
+    <string name="location_permission">Местоположение показывает, где вы среди событий на карте.</string>
 </resources>

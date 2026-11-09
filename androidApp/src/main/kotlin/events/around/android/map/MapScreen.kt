@@ -1,51 +1,53 @@
 package events.around.android.map
 
-import androidx.compose.foundation.background
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.NearMe
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.outlined.FitScreen
+import androidx.compose.material.icons.outlined.MyLocation
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import events.around.android.ui.components.EventRow
 import events.around.android.ui.strings.LocalAroundStrings
+import events.around.android.ui.theme.AroundColors
 import events.around.shared.presentation.feed.MapUiState
 import events.around.shared.presentation.feed.MapViewModel
 
-private const val SHEET_FRACTION = 0.38f
-private val SHEET_BOTTOM = 8.dp
-private val MAP_SIDE_PADDING = 40.dp
+private val SIDE_PADDING = 40.dp
+private val BOTTOM_PADDING = 120.dp
 
-/** The city's events on an OpenStreetMap map, the list in a panel below. */
+/**
+ * The map tab with Material's own parts: the map edge to edge, tonal buttons for "my location" and "show all", a
+ * "List" button at the bottom, and the events in a bottom sheet — all of them, or the tapped place's.
+ */
 @Composable
 fun MapScreen(
     viewModel: MapViewModel,
@@ -56,105 +58,105 @@ fun MapScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val strings = LocalAroundStrings.current
+    var fitToken by remember { mutableIntStateOf(0) }
+    var locateToken by remember { mutableIntStateOf(0) }
+    var showsList by remember { mutableStateOf(false) }
+    val askLocation = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { granted ->
+        if (granted.values.any { it }) locateToken++
+    }
+    val side = with(LocalDensity.current) { SIDE_PADDING.roundToPx() }
+    val bottom = with(LocalDensity.current) { BOTTOM_PADDING.roundToPx() }
+
     Box(modifier.fillMaxSize()) {
-        val density = LocalDensity.current
-        val sheetHeight = (LocalConfiguration.current.screenHeightDp * SHEET_FRACTION).dp
-        val bottom = with(density) { (sheetHeight + SHEET_BOTTOM).roundToPx() }
-        val side = with(density) { MAP_SIDE_PADDING.roundToPx() }
-        var fitToken by remember { mutableIntStateOf(0) }
         MapLibreMap(
             events = state.events,
             padding = MapPadding(left = side, top = side * 2, right = side, bottom = bottom),
             fitToken = fitToken,
-            onSelect = viewModel::select,
+            locateToken = locateToken,
+            onSelect = {
+                viewModel.select(it)
+                showsList = true
+            },
             modifier = Modifier.fillMaxSize(),
         )
-        FilledTonalIconButton(
-            onClick = {
-                viewModel.clearSelection()
-                fitToken++
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .navigationBarsPadding()
-                .padding(end = 22.dp, bottom = sheetHeight + SHEET_BOTTOM + 12.dp),
-        ) {
-            Icon(Icons.Outlined.NearMe, contentDescription = strings.mapTitle)
-        }
-        if (navigateBack != null) {
-            Surface(
-                shape = CircleShape,
-                shadowElevation = 3.dp,
-                modifier = Modifier.statusBarsPadding().padding(start = 20.dp, top = 8.dp),
-            ) {
-                IconButton(onClick = navigateBack) {
+        Column(Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp)) {
+            if (navigateBack != null) {
+                FilledTonalIconButton(onClick = navigateBack) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                 }
             }
+            FilledTonalIconButton(onClick = {
+                askLocation.launch(
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                )
+            }) {
+                Icon(Icons.Outlined.MyLocation, contentDescription = strings.mapMyLocation)
+            }
+            FilledTonalIconButton(onClick = {
+                viewModel.clearSelection()
+                fitToken++
+            }) {
+                Icon(Icons.Outlined.FitScreen, contentDescription = strings.mapShowAll)
+            }
         }
-        // The floating card of the designs, kept above the tab bar.
-        Sheet(
+        if (state.events.isNotEmpty()) {
+            ExtendedFloatingActionButton(
+                onClick = { showsList = true },
+                icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
+                text = { Text("${strings.mapList} · ${state.events.size}") },
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+            )
+        }
+    }
+
+    if (showsList) {
+        EventsSheet(
             state = state,
-            onClose = viewModel::clearSelection,
-            onOpenEvent = onOpenEvent,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(start = 9.dp, end = 9.dp, bottom = SHEET_BOTTOM)
-                .fillMaxHeight(SHEET_FRACTION),
+            onDismiss = {
+                showsList = false
+                viewModel.clearSelection()
+            },
+            onOpenEvent = {
+                showsList = false
+                onOpenEvent(it)
+            },
         )
     }
 }
 
 @Composable
-private fun Sheet(
+private fun EventsSheet(
     state: MapUiState,
-    onClose: () -> Unit,
+    onDismiss: () -> Unit,
     onOpenEvent: (Long) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val strings = LocalAroundStrings.current
-    Surface(
-        shape = RoundedCornerShape(34.dp),
-        shadowElevation = 8.dp,
-        modifier = modifier.fillMaxWidth(),
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
     ) {
-        Column {
-            Box(
-                Modifier
-                    .padding(top = 8.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-                    .padding(horizontal = 18.dp, vertical = 2.dp),
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
-            ) {
-                Text(
-                    strings.eventsCount("${state.sheet.size}"),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f).padding(vertical = 12.dp),
-                )
-                if (state.isSelection) {
-                    IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = strings.close) }
-                }
+        Text(
+            strings.eventsCount("${state.sheet.size}"),
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = AroundColors.ink,
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp),
+        )
+        LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp)) {
+            items(state.sheet.size, key = { state.sheet[it].id }) { index ->
+                val event = state.sheet[index]
+                EventRow(event, onClick = { onOpenEvent(event.id) }, showsSeparator = index < state.sheet.lastIndex)
             }
-            LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
-                items(state.sheet.size, key = { state.sheet[it].id }) { index ->
-                    val event = state.sheet[index]
-                    EventRow(event, onClick = { onOpenEvent(event.id) }, showsSeparator = index < state.sheet.lastIndex)
-                }
-                if (state.unlocated > 0 && !state.isSelection) {
-                    item {
-                        Text(
-                            strings.mapUnlocated("${state.unlocated}"),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 8.dp),
-                        )
-                    }
+            if (state.unlocated > 0 && !state.isSelection) {
+                item {
+                    Text(
+                        strings.mapUnlocated("${state.unlocated}"),
+                        fontSize = 13.sp,
+                        color = AroundColors.secondary,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                    )
                 }
             }
         }

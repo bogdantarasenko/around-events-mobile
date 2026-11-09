@@ -27,6 +27,8 @@
 		<string>ru</string>
 		<string>be</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location shows where you are among the events on the map.</string>
 	<key>AroundMapStyleURL</key>
 	<string>https://tiles.openfreemap.org/styles/liberty</string>
 	<key>AroundBaseURL</key>

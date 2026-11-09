@@ -98,4 +98,8 @@
     <string name="city_is_current">My city</string>
     <string name="settings_preferences">Preferences</string>
     <string name="settings_resources">Resources</string>
+    <string name="map_list">List</string>
+    <string name="map_my_location">My location</string>
+    <string name="map_show_all">Show all events</string>
+    <string name="location_permission">Location shows where you are among the events on the map.</string>
 </resources>

@@ -1,5 +1,9 @@
 package events.around.android.map
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Color.WHITE
 import android.graphics.PointF
 import androidx.compose.runtime.Composable
@@ -13,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -22,6 +27,8 @@ import events.around.core.model.Event
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression.get
@@ -57,6 +64,8 @@ fun MapLibreMap(
     interactive: Boolean = true,
     padding: MapPadding = MapPadding(),
     fitToken: Int = 0,
+    /** Changing it shows the person's location and follows it; ask for the location permission first. */
+    locateToken: Int = 0,
     onSelect: (List<Long>) -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -67,7 +76,6 @@ fun MapLibreMap(
         MapView(context).apply {
             onCreate(null)
             getMapAsync { native ->
-                native.uiSettings.isRotateGesturesEnabled = false
                 native.uiSettings.isTiltGesturesEnabled = false
                 native.uiSettings.isLogoEnabled = false
                 native.uiSettings.setAllGesturesEnabled(interactive)
@@ -124,6 +132,10 @@ fun MapLibreMap(
                 fit(native, places, padding)
             }
             shown.fitToken = fitToken
+            if (shown.locateToken != locateToken) {
+                shown.locateToken = locateToken
+                followLocation(native, context)
+            }
         },
     )
 }
@@ -140,6 +152,23 @@ data class MapPadding(
 private class Shown {
     var places: List<Place>? = null
     var fitToken = 0
+    var locateToken = 0
+}
+
+// The caller asked for the permission before changing locateToken; without it there is nothing to show.
+@SuppressLint("MissingPermission")
+private fun followLocation(map: NativeMap, context: Context) {
+    val style = map.style ?: return
+    val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+        PackageManager.PERMISSION_GRANTED
+    if (!granted) return
+    map.locationComponent.apply {
+        if (!isLocationComponentActivated) {
+            activateLocationComponent(LocationComponentActivationOptions.builder(context, style).build())
+        }
+        isLocationComponentEnabled = true
+        cameraMode = CameraMode.TRACKING
+    }
 }
 
 private class Place(val point: LatLng, val feature: Feature)

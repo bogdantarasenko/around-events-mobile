@@ -10,4 +10,14 @@ extension View {
             buttonStyle(.bordered)
         }
     }
+
+    /// Liquid Glass behind a custom control group on iOS 26 and later, the regular material before it.
+    @ViewBuilder
+    func glassBackground<S: Shape>(in shape: S) -> some View {
+        if #available(iOS 26.0, *) {
+            glassEffect(.regular.interactive(), in: shape)
+        } else {
+            background(.regularMaterial, in: shape)
+        }
+    }
 }

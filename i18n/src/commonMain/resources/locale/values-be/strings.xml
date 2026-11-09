@@ -97,4 +97,8 @@
     <string name="city_is_current">Мой горад</string>
     <string name="settings_preferences">Налады</string>
     <string name="settings_resources">Карысна</string>
+    <string name="map_list">Спіс</string>
+    <string name="map_my_location">Маё месцазнаходжанне</string>
+    <string name="map_show_all">Паказаць усе падзеі</string>
+    <string name="location_permission">Месцазнаходжанне паказвае, дзе вы сярод падзей на мапе.</string>
 </resources>
